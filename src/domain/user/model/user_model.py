@@ -1,11 +1,11 @@
-import json
-from typing import Any, Dict, List, Optional, Union
-from pydantic import BaseModel
-from .common_model import ProfessionVO, InterestListVO
-from ....config.constant import *
 import logging as log
+from typing import List, Optional
 
-log.basicConfig(filemode='w', level=log.INFO)
+from pydantic import BaseModel
+
+from .common_model import InterestListVO, ProfessionVO
+
+log.basicConfig(filemode="w", level=log.INFO)
 
 
 class ProfileDTO(BaseModel):

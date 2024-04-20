@@ -25,3 +25,10 @@ venv
 
 **/**.sh
 **.env
+
+Dockerfile
+compose.dev.yaml
+.dockerignore
+
+.python-version
+**.pre-commit-config.yaml

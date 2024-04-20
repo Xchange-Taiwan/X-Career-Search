@@ -1,31 +1,31 @@
-from typing import List, Dict, Any
-from fastapi import (
-    APIRouter,
-    Request, Depends,
-    Header, Path, Query, Body, Form
-)
-from ...domain.search.model import (
-    search_model as search,
-)
-from ..res.response import *
+import logging as log
+from typing import List
+
+from fastapi import APIRouter, Query
+
 from ...config.conf import *
 from ...config.constant import *
 from ...config.exception import *
-import logging as log
+from ...domain.search.model import search_model as search
+from ..res.response import *
 
-log.basicConfig(filemode='w', level=log.INFO)
+log.basicConfig(filemode="w", level=log.INFO)
 
 
 router = APIRouter(
-    prefix='/search',
-    tags=['Search Mentors'],
-    responses={404: {'description': 'Not found'}},
+    prefix="/search",
+    tags=["Search Mentors"],
+    responses={404: {"description": "Not found"}},
 )
 
 
 # TODO: read from SEARCH service
-@router.get('/mentors',
-            responses=idempotent_response('mentor_list', search.SearchMentorProfileListVO))
+@router.get(
+    "/mentors",
+    responses=idempotent_response(
+        "mentor_list", search.SearchMentorProfileListVO
+    ),
+)
 async def mentor_list(
     search_patterns: List[str] = Query(None),
     filter_positions: List[str] = Query(None),
@@ -50,6 +50,3 @@ async def mentor_list(
         next_id=next_id,
     )
     return res_success(data=None)
-
-
-

@@ -2,46 +2,48 @@ from enum import Enum
 
 
 class InterestCategory(Enum):
-    INTERESTED_POSITION = 'interested_position'
-    SKILL = 'skill'
-    TOPIC = 'topic'
+    INTERESTED_POSITION = "interested_position"
+    SKILL = "skill"
+    TOPIC = "topic"
 
 
 class ProfessionCategory(Enum):
-    EXPERTISE = 'expertise'
-    INDUSTRY = 'industry'
+    EXPERTISE = "expertise"
+    INDUSTRY = "industry"
 
 
 class ExperienceCategory(Enum):
-    WORK = 'work'
-    EDUCATION = 'education'
-    LINK = 'link'
+    WORK = "work"
+    EDUCATION = "education"
+    LINK = "link"
 
 
 class ScheduleType(Enum):
-    ALLOW = 'allow'
-    FORBIDDEN = 'forbidden'
+    ALLOW = "allow"
+    FORBIDDEN = "forbidden"
 
 
 class RoleType(Enum):
-    MENTOR = 'mentor'
-    MENTEE = 'mentee'
+    MENTOR = "mentor"
+    MENTEE = "mentee"
 
 
 class BookingStatus(Enum):
-    PENDING = 'pending'
-    ACCEPT = 'accept'
-    REJECT = 'reject'
+    PENDING = "pending"
+    ACCEPT = "accept"
+    REJECT = "reject"
 
 
 class ReservationListState(Enum):
-    UPCOMING = 'upcoming'
-    PENDING = 'pending'
-    HISTORY = 'history'
+    UPCOMING = "upcoming"
+    PENDING = "pending"
+    HISTORY = "history"
+
 
 class SortingBy(Enum):
-    UPDATED_TIME = 'updated_time'
+    UPDATED_TIME = "updated_time"
     # VIEW = 'view'
+
 
 class Sorting(Enum):
     ASC = 1

@@ -1,12 +1,13 @@
-import json
-from typing import Any, Dict, List, Optional, Union
+import logging as log
+from typing import List, Optional
+
 from pydantic import BaseModel
-from ...mentor.model.mentor_model import MentorProfileVO
+
 from ....config.conf import *
 from ....config.constant import *
-import logging as log
+from ...mentor.model.mentor_model import MentorProfileVO
 
-log.basicConfig(filemode='w', level=log.INFO)
+log.basicConfig(filemode="w", level=log.INFO)
 
 
 class SearchMentorProfileDTO(BaseModel):

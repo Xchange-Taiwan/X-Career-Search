@@ -1,12 +1,13 @@
-import json
-from typing import Any, Dict, List, Optional, Union
+import logging as log
+from typing import List, Optional
+
 from pydantic import BaseModel
-from .user_model import *
+
 from ....config.conf import *
 from ....config.constant import *
-import logging as log
+from .user_model import *
 
-log.basicConfig(filemode='w', level=log.INFO)
+log.basicConfig(filemode="w", level=log.INFO)
 
 
 class UserDTO(BaseModel):
