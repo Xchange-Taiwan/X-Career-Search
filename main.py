@@ -12,6 +12,7 @@ from src.router.v1 import (
     search,
 )
 from src.config import exception
+from src.config.conf import BATCH
 
 STAGE = os.environ.get('STAGE')
 root_path = '/' if not STAGE else f'/{STAGE}'
@@ -32,9 +33,9 @@ app.include_router(router_v1)
 
 exception.include_app(app)
 
-
 @app.get('/search-service/{term}')
 async def info(term: str):
+    print(BATCH)
     if term != 'yolo':
         raise HTTPException(
             status_code=418, detail='Oops! Wrong phrase. Guess again?')

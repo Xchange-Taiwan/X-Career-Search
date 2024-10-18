@@ -44,5 +44,5 @@ class SortingBy(Enum):
     # VIEW = 'view'
 
 class Sorting(Enum):
-    ASC = 1
-    DESC = -1
+    ASC = 'acs'
+    DESC = 'desc'

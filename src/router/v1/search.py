@@ -47,9 +47,7 @@ async def mentor_list(
         filter_industries=filter_industries,
         sorting_by=sorting_by,
         sorting=sorting,
-        next_id=next_id,
+        next_id=int(next_id),
     )
+    print(query)
     return res_success(data=None)
-
-
-
