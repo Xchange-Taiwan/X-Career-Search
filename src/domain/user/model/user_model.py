@@ -9,6 +9,7 @@ log.basicConfig(filemode='w', level=log.INFO)
 
 
 class ProfileDTO(BaseModel):
+    user_id: int
     name: Optional[str]
     avator: Optional[str]
     timezone: Optional[int]

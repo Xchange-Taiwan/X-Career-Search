@@ -25,4 +25,5 @@ venv
 
 **/**.sh
 **.env
-**.env.**
+**.env.dev
+**.env.prod

@@ -1,7 +1,8 @@
-boto3==1.20.24
+boto3==1.20.32
 fastapi==0.73.0
 mangum==0.12.3
 starlette==0.17.1
 uvicorn==0.17.1
 pydantic==1.9.0
 python-dotenv==1.0.1
+httpx==0.27.2
