@@ -1,5 +1,10 @@
 {
     "devDependencies": {
+        "serverless": "^3.39.0",
         "serverless-python-requirements": "^6.0.0"
+    },
+    "scripts": {
+        "serverless:deploy:xchange:dev": "./deploy.sh -e dev -r ap-northeast-1 -a xchange-quee",
+        "serverless:destroy:xchange:dev": "sls destroy --stage dev --region ap-northeast-1 --profile xchange-quee"
     }
 }

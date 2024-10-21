@@ -1,20 +1,56 @@
-service: X-Career-Search
-app: X-Career-Search
+service: x-change-search
+app: x-change-search
 frameworkVersion: "3"
 provider:
   name: aws
   runtime: python3.9
-  stage: de
+  stage: dev
   timeout: 30
+
 custom:
   pythonRequirements:
     dockerizePip: true
     layer:
-      name: x-career-user
-      description: XChange Career - User
+      name: x-career-search
+      description: XChange Career - search
       compatibleRuntimes:
         - python3.9
-
+  opensearch:
+    instanceType: t3.small.search
+    accessPolicies: fine-grain-access-control
+    deploymentType: "Development and testing"
+    username: "queekao"
+    password: "9bfLbF9-4#bU@"
+resources:
+  Resources:
+    OpenSearchDomain:
+      # TODO: Implement an IAM Role of Lambda with opensearch
+      Type: "AWS::OpenSearchService::Domain"
+      Properties:
+        DomainName: ${self:provider.stage}-opensearch-domain
+        EngineVersion: "OpenSearch_2.15" # Specify the version you want to use
+        NodeToNodeEncryptionOptions:
+          Enabled: true # Enable node-to-node encryption
+        EncryptionAtRestOptions:
+          Enabled: true # This is often used alongside node-to-node encryption
+        DomainEndpointOptions:
+          EnforceHTTPS: true
+          TLSSecurityPolicy: "Policy-Min-TLS-1-2-2019-07"
+        ClusterConfig:
+          InstanceType: ${self:custom.opensearch.instanceType}
+          InstanceCount: 1 # Not multi-AZ, thus one instance
+          DedicatedMasterEnabled: false
+          ZoneAwarenessEnabled: false
+        EBSOptions:
+          EBSEnabled: true
+          VolumeType: "gp2"
+          VolumeSize: 10
+        AdvancedSecurityOptions:
+          Enabled: true
+          InternalUserDatabaseEnabled: true
+          MasterUserOptions:
+            MasterUserName: ${self:custom.opensearch.username}
+            MasterUserPassword: ${self:custom.opensearch.password}
 functions:
   searchApp:
     package:
@@ -24,7 +60,8 @@ functions:
         - "!package.json"
         - "!package-lock.json"
         - "!.serverless/**"
-        - "!.venv/**"
+        - "!venv/**"
+        - "!**/**.sh"
         - "!node_modules/**"
         - "!integration/**"
         - "!test/**"
@@ -34,6 +71,10 @@ functions:
     handler: main.handler
     environment:
       STAGE: ${self:provider.stage}
+      OPENSEARCH_ENDPOINT:
+        !Join ["", ["https://", !GetAtt OpenSearchDomain.DomainEndpoint]]
+      OPENSERACH_USERNAME: ${self:custom.opensearch.username}
+      OPENSERACH_PASSWORD: ${self:custom.opensearch.password}
     layers:
       - { Ref: PythonRequirementsLambdaLayer }
     events:
