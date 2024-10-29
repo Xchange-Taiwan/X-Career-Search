@@ -15,10 +15,11 @@ class SearchService:
         self,
         body: ProfileDTO
     ):
+        # await self.opensearch.connect()
         try:
             response = self.opensearch.http_client.put(
                 f"/profiles/_doc/{body.user_id}", data=body.json())
-            if response.status_code == 201:
+            if response.status_code in (201, 200):
                 return response
             else:
                 return {

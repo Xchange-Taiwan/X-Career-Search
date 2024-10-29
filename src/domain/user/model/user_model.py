@@ -17,9 +17,9 @@ class ProfileDTO(BaseModel):
     position: Optional[str]
     company: Optional[str]
     linkedin_profile: Optional[str]
-    interested_positions: Optional[List[int]] = []
-    skills: Optional[List[int]] = []
-    topics: Optional[List[int]] = []
+    interested_positions: Optional[List[str]] = []
+    skills: Optional[List[str]] = []
+    topics: Optional[List[str]] = []
 
 
 class ProfileVO(BaseModel):

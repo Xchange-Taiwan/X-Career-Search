@@ -31,9 +31,8 @@ async def post_mentor_to_opensearch(
         body: ProfileDTO = Depends(post_mentor),
 ):
     res = await _search_service.send_mentor(body=body)
-    print(res)
-    if res.get("status_code") == 200:
-        return res_success(data=json.loads(res.get('body')))
+    if res.status_code in (201, 200):
+        return res_success(data=res.json(), status_code=201)
     else:
         raise ClientException(
-            msg=f"{res.get('body')}", code=f"{res.get('status_code')}")
+            msg=f"{res.get('body')}", code=f"{res.status_code}")
