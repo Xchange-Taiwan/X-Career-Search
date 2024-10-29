@@ -1,17 +1,30 @@
-service: x-change-search
-app: x-change-search
+service: x-career-search
 frameworkVersion: "3"
 provider:
   name: aws
   runtime: python3.9
   stage: dev
   timeout: 30
+  region: ap-northeast-1
+  iam:
+    role:
+      statements:
+        - Effect: "Allow"
+          Action:
+            - "es:ESHttpGet"
+            - "es:ESHttpPut"
+            - "es:ESHttpPost"
+            - "es:ESHttpDelete"
+          Resource:
+            - !GetAtt OpenSearchDomain.Arn
+  # - !Sub "arn:aws:es:${self:provider.region}:${aws:accountId}:domain/${self:provider.stage}-opensearch-domain/*"
 
 custom:
+  app: x-career-search
   pythonRequirements:
     dockerizePip: true
     layer:
-      name: x-career-search
+      name: ${self:custom.app}
       description: XChange Career - search
       compatibleRuntimes:
         - python3.9
@@ -19,12 +32,27 @@ custom:
     instanceType: t3.small.search
     accessPolicies: fine-grain-access-control
     deploymentType: "Development and testing"
-    username: "queekao"
-    password: "9bfLbF9-4#bU@"
 resources:
   Resources:
+    OpenSearchMasterRole:
+      Type: AWS::IAM::Role
+      Properties:
+        AssumeRolePolicyDocument:
+          Version: "2012-10-17"
+          Statement:
+            - Effect: "Allow"
+              Principal:
+                Service: "opensearchservice.amazonaws.com"
+              Action: "sts:AssumeRole"
+        Policies:
+          - PolicyName: "OpenSearchMasterPolicy"
+            PolicyDocument:
+              Version: "2012-10-17"
+              Statement:
+                - Effect: "Allow"
+                  Action: "es:*"
+                  Resource: "*"
     OpenSearchDomain:
-      # TODO: Implement an IAM Role of Lambda with opensearch
       Type: "AWS::OpenSearchService::Domain"
       Properties:
         DomainName: ${self:provider.stage}-opensearch-domain
@@ -36,6 +64,7 @@ resources:
         DomainEndpointOptions:
           EnforceHTTPS: true
           TLSSecurityPolicy: "Policy-Min-TLS-1-2-2019-07"
+          CustomEndpointEnabled: false
         ClusterConfig:
           InstanceType: ${self:custom.opensearch.instanceType}
           InstanceCount: 1 # Not multi-AZ, thus one instance
@@ -45,14 +74,20 @@ resources:
           EBSEnabled: true
           VolumeType: "gp2"
           VolumeSize: 10
+        AccessPolicies:
+          Statement:
+            - Effect: Allow
+              Principal:
+                AWS: !GetAtt OpenSearchMasterRole.Arn
+                # AWS: "arn:aws:iam::${AWS::AccountId}:role/${self:custom.app}-${self:provider.stage}-${self:provider.region}-lambdaRole"
+              Action: "es:*"
+              Resource: !Sub "arn:aws:es:${AWS::Region}:${AWS::AccountId}:domain/${self:provider.stage}-opensearch-domain/*"
         AdvancedSecurityOptions:
           Enabled: true
-          InternalUserDatabaseEnabled: true
           MasterUserOptions:
-            MasterUserName: ${self:custom.opensearch.username}
-            MasterUserPassword: ${self:custom.opensearch.password}
+            MasterUserARN: !GetAtt OpenSearchMasterRole.Arn
 functions:
-  searchApp:
+  app:
     package:
       individually: true
       patterns:
@@ -67,14 +102,12 @@ functions:
         - "!test/**"
         - "!__pycache__/**"
         - "!**/__pycache__/**"
-
     handler: main.handler
+    role: !GetAtt OpenSearchMasterRole.Arn
     environment:
       STAGE: ${self:provider.stage}
       OPENSEARCH_ENDPOINT:
         !Join ["", ["https://", !GetAtt OpenSearchDomain.DomainEndpoint]]
-      OPENSERACH_USERNAME: ${self:custom.opensearch.username}
-      OPENSERACH_PASSWORD: ${self:custom.opensearch.password}
     layers:
       - { Ref: PythonRequirementsLambdaLayer }
     events:
