@@ -103,7 +103,6 @@ functions:
         - "!__pycache__/**"
         - "!**/__pycache__/**"
     handler: main.handler
-    role: !GetAtt OpenSearchMasterRole.Arn
     environment:
       STAGE: ${self:provider.stage}
       OPENSEARCH_ENDPOINT:
