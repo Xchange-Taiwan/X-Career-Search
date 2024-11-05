@@ -1,10 +1,9 @@
 from fastapi import (
-    APIRouter,
-    Request, Depends,
+    APIRouter, Depends
 )
 from ...domain.search.service.search_service import SearchService
 from ...infra.api.opensearch import OpenSearch
-from ...domain.user.model.user_model import *
+from ...domain.search.model.search_model import *
 from ..req.search_internal import *
 from ..res.response import *
 from ...config.conf import *
@@ -26,13 +25,18 @@ _search_service = SearchService(
 
 
 @router.post('/mentor', status_code=status.HTTP_201_CREATED,
-             responses=post_response('mentor', ProfileVO))
+             responses=post_response('mentor', SearchMentorProfileResponseVO))
 async def post_mentor_to_opensearch(
         body: ProfileDTO = Depends(post_mentor),
 ):
     res = await _search_service.send_mentor(body=body)
-    if res.status_code in (201, 200):
-        return res_success(data=res.json(), status_code=201)
+    status_code = res.get('status_code', None)
+    if status_code in (201, 200):
+        return res_success(data=res.get('body').json(), status_code=201)
+    elif status_code is None:
+        return res_err_format(data=res, status_code=status_code)
+    elif 400 <= status_code < 500 or 500 <= status_code < 600:
+        return res_err_format(data=res, status_code=status_code)
     else:
-        raise ClientException(
+        raise ServerException(
             msg=f"{res.get('body')}", code=f"{res.status_code}")
