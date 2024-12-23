@@ -42,7 +42,7 @@ def format_search_mentors_query(
     if query.search_pattern:
         query_body["query"]["bool"]["must"].append({
             "query_string": {
-                "query": query.search_pattern
+                "query": f"*{query.search_pattern}*"
             }
         })
 

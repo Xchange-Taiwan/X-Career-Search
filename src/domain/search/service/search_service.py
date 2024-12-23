@@ -110,3 +110,39 @@ class SearchService:
                 'message': str(e),
                 'status_code': 500
             }
+
+    async def get_mentor(
+        self, user_id: int
+    ):
+        try:
+            response = self.opensearch.http_client.get(
+                f"/profiles/_doc/{user_id}", params={"pretty": "true"})
+            if response.status_code in (201, 200):
+                data = response.text
+                data_object = json.loads(data)['_source']
+
+                return {
+                    'status_code': response.status_code,
+                    'body': data_object
+                }
+            else:
+                return {
+                    'status_code': response.status_code,
+                    'body': response.text
+                }
+        except httpx.RequestError as e:
+            return ClientException(
+                msg=f"Request failed: {e}",
+                status_code=400
+            )
+        except httpx.HTTPStatusError as e:
+            return ServerException(
+                msg=f"HTTP error occurred: {e.response.text}",
+                status_code=f"{e.response.status_code}"
+            )
+        except Exception as e:
+            return {
+                'error': 'Unhandled exception',
+                'message': str(e),
+                'status_code': 500
+            }
