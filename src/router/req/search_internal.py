@@ -1,8 +1,8 @@
 from fastapi import Header, Body
-from ...domain.user.model.user_model import *
+from ...domain.mentor.model.mentor_model import MentorProfileDTO
 
 
 def post_mentor(
-    body: ProfileDTO = Body(...)
-) -> (ProfileDTO):
+    body: MentorProfileDTO = Body(...)
+) -> (MentorProfileDTO):
     return body

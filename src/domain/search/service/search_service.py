@@ -1,5 +1,5 @@
 from ....infra.api.opensearch import OpenSearch
-from ....domain.user.model.user_model import *
+from ....domain.mentor.model.mentor_model import *
 from ....domain.search.model.search_model import *
 from ....config.exception import *
 import logging as log
@@ -45,11 +45,13 @@ class SearchService:
 
     async def send_mentor(
         self,
-        body: ProfileDTO
+        body: MentorProfileDTO
     ):
         try:
+            user_id = body.user_id
+            data = body.to_json()
             response = self.opensearch.http_client.put(
-                f"/profiles/_doc/{body.user_id}", data=body.json())
+                f"/profiles/_doc/{user_id}", data=data)
             if response.status_code in (201, 200):
                 return {
                     'status_code': response.status_code,

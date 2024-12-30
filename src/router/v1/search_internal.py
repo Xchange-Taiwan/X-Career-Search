@@ -4,6 +4,7 @@ from fastapi import (
 from ...domain.search.service.search_service import SearchService
 from ...infra.api.opensearch import OpenSearch
 from ...domain.search.model.search_model import *
+from ...domain.mentor.model.mentor_model import MentorProfileDTO
 from ..req.search_internal import *
 from ..res.response import *
 from ...config.conf import *
@@ -27,7 +28,7 @@ _search_service = SearchService(
 @router.post('/mentor', status_code=status.HTTP_201_CREATED,
              responses=post_response('mentor', SearchMentorProfileResponseVO))
 async def post_mentor_to_opensearch(
-        body: ProfileDTO = Depends(post_mentor),
+        body: MentorProfileDTO = Depends(post_mentor),
 ):
     res = await _search_service.send_mentor(body=body)
     status_code = res.get('status_code', None)
