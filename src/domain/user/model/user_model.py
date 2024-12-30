@@ -9,17 +9,19 @@ log.basicConfig(filemode='w', level=log.INFO)
 
 
 class ProfileDTO(BaseModel):
-    user_id: int
+    user_id: Optional[int]
     name: Optional[str]
-    avator: Optional[str]
-    timezone: Optional[int]
-    industry: Optional[int]
-    position: Optional[str]
+    avatar: Optional[str]
+    job_title: Optional[str]
     company: Optional[str]
+    years_of_experience: Optional[int] = 0
+    region: Optional[str]
     linkedin_profile: Optional[str]
-    interested_positions: Optional[List[str]] = []
-    skills: Optional[List[str]] = []
-    topics: Optional[List[str]] = []
+    interested_positions: Optional[List[Union[str]]] = []
+    skills: Optional[List[Union[str]]] = []
+    topics: Optional[List[Union[str]]] = []
+    industries: Optional[List[Union[str]]] = []
+    language: Optional[str]
 
 
 class ProfileVO(BaseModel):
