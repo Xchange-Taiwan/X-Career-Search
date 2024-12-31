@@ -2,6 +2,7 @@ import json
 from enum import Enum
 from typing import Any, Dict, List, Optional, Union
 from pydantic import BaseModel
+from fastapi.encoders import jsonable_encoder
 from .experience_model import ExperienceVO
 from ...user.model.user_model import *
 from ...user.model.common_model import (
@@ -19,23 +20,28 @@ class MentorProfileDTO(ProfileDTO):
     about: Optional[str]
     seniority_level: Optional[SeniorityLevel]
     expertises: Optional[List[str]]
+    # Search Service 的 MentorProfileDTO 需要这个字段
+    experiences: Optional[List[Dict]] = []
 
     class Config:
         from_attributes = True  # orm_mode = True
 
     def to_json(self) -> Dict:
         dao_dict = {}
-        for field, value in self.__dict__.items():
+        for key in self.model_fields.keys():
+            value = getattr(self, key)
             if value is None:
                 continue
-            if isinstance(value, str) and value == '':
+            elif isinstance(value, str) or isinstance(value, list) or isinstance(value, dict):
+                if len(value) == 0:
+                    continue
+            elif isinstance(value, Enum):
+                dao_dict[key] = value.value
                 continue
-            if isinstance(value, Enum):
-                dao_dict[field] = value.value
-                continue
-            dao_dict[field] = value
+            dao_dict[key] = value
         
-        return json.dumps(dao_dict)
+        dao_dict = jsonable_encoder(dao_dict)
+        return dao_dict
 
     def remove_empty_strings(self):
         for field, value in self.__dict__.items():

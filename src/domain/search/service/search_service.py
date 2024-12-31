@@ -17,7 +17,7 @@ class SearchService:
         try:
             if method == 'put':
                 response = self.opensearch.http_client.put(
-                    f"/profiles/_doc/{kwargs.user_id}", data=kwargs.json())
+                    f"/profiles/_doc/{kwargs.user_id}", json=kwargs.json())
             if method == 'get':
                 response = self.opensearch.http_client.get(
                     f"/profiles/_doc", json=kwargs)
@@ -29,19 +29,17 @@ class SearchService:
                     'body': response.text
                 }
         except httpx.RequestError as e:
-            return ClientException(
-                msg=f"Request failed: {e}"
+            raise ClientException(
+                msg=f"Request failed: {str(e)}",
             )
         except httpx.HTTPStatusError as e:
-            return ServerException(
+            raise ServerException(
                 msg=f"HTTP error occurred: {e.response.text}",
-                status=f"{e.response.status_code}"
             )
         except Exception as e:
-            return {
-                'error': 'Unhandled exception',
-                'message': str(e)
-            }
+            raise ServerException(
+                msg='Unhandled exception',
+            )
 
     async def send_mentor(
         self,
@@ -49,9 +47,9 @@ class SearchService:
     ):
         try:
             user_id = body.user_id
-            data = body.to_json()
+            json_data = body.to_json()
             response = self.opensearch.http_client.put(
-                f"/profiles/_doc/{user_id}", data=data)
+                f"/profiles/_doc/{user_id}", json=json_data)
             if response.status_code in (201, 200):
                 return {
                     'status_code': response.status_code,
@@ -63,13 +61,12 @@ class SearchService:
                     'body': response.text
                 }
         except httpx.RequestError as e:
-            return ClientException(
-                msg=f"Request failed: {e}"
+            raise ClientException(
+                msg=f"Request failed: {str(e)}",
             )
         except httpx.HTTPStatusError as e:
-            return ServerException(
+            raise ServerException(
                 msg=f"HTTP error occurred: {e.response.text}",
-                status=f"{e.response.status_code}"
             )
         except Exception as e:
             return {
@@ -97,21 +94,17 @@ class SearchService:
                     'body': response.text
                 }
         except httpx.RequestError as e:
-            return ClientException(
+            raise ClientException(
                 msg=f"Request failed: {e}",
-                status_code=400
             )
         except httpx.HTTPStatusError as e:
-            return ServerException(
+            raise ServerException(
                 msg=f"HTTP error occurred: {e.response.text}",
-                status_code=f"{e.response.status_code}"
             )
         except Exception as e:
-            return {
-                'error': 'Unhandled exception',
-                'message': str(e),
-                'status_code': 500
-            }
+            raise ServerException(
+                msg=str(e),
+            )
 
     async def get_mentor(
         self, user_id: int
@@ -133,14 +126,12 @@ class SearchService:
                     'body': response.text
                 }
         except httpx.RequestError as e:
-            return ClientException(
+            raise ClientException(
                 msg=f"Request failed: {e}",
-                status_code=400
             )
         except httpx.HTTPStatusError as e:
-            return ServerException(
+            raise ServerException(
                 msg=f"HTTP error occurred: {e.response.text}",
-                status_code=f"{e.response.status_code}"
             )
         except Exception as e:
             return {
