@@ -1,3 +1,4 @@
+import json
 from fastapi import status
 from pydantic import BaseModel
 from typing import Dict, Any
@@ -15,8 +16,9 @@ class ClientResponse(BaseModel):
 
     @staticmethod
     def parse(response: httpx.Response = None) -> 'ClientResponse':
+        res = None
         if response:
-            return ClientResponse(
+            res = ClientResponse(
                 status_code=response.status_code,
                 headers=response.headers,
                 res_json=response.json(),
@@ -24,4 +26,4 @@ class ClientResponse(BaseModel):
                 res_text=response.text,
             )
 
-        return None
+        return res

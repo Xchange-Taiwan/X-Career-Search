@@ -54,25 +54,11 @@ async def mentor_list(
     )
     query = format_search_mentors_query(search_query_dto)
     res = await _search_service.get_mentor_list(query)
-    status_code = res.get('status_code', None)
-    if status_code in (201, 200):
-        return res_success(data=res.get('body', {}), status_code=200)
-    elif 400 <= status_code < 500 or 500 <= status_code < 600:
-        return res_err_format(data=res, status_code=status_code)
-    else:
-        raise ServerException(
-            msg=f"{res.get('body')}", code=f"{res.status_code}")
+    return res_success(data=res, status_code=200)
 
 
 @router.get('/{user_id}',
             responses=idempotent_response('get_mentor', search.SearchMentorProfileVO))
 async def get_mentor(user_id: int):
     res = await _search_service.get_mentor(user_id)
-    status_code = res.get('status_code', None)
-    if status_code in (201, 200):
-        return res_success(data=res.get('body', {}), status_code=200)
-    elif 400 <= status_code < 500 or 500 <= status_code < 600:
-        return res_err_format(data=res, status_code=status_code)
-    else:
-        raise ServerException(
-            msg=f"{res.get('body')}", code=f"{res.status_code}")
+    return res_success(data=res, status_code=200)

@@ -31,12 +31,12 @@ def res_success(data=None, msg='ok', code='0', status_code=200):
     }, status_code=status_code)
 
 
-def res_err_format(data=None, msg='error', code='1', status_code=400):
-    return JSONResponse(content={
+def res_err_format(data=None, msg='error', code='1'):
+    return {
         'code': code,
         'msg': msg,
         'data': data,
-    }, status_code=status_code)
+    }
 
 
 class ResponseVO(BaseModel):

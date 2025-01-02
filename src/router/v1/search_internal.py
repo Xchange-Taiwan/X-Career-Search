@@ -31,13 +31,4 @@ async def post_mentor_to_opensearch(
         body: MentorProfileDTO = Depends(post_mentor),
 ):
     res = await _search_service.send_mentor(body=body)
-    status_code = res.get('status_code', None)
-    if status_code in (201, 200):
-        return res_success(data=res.get('body').json(), status_code=201)
-    elif status_code is None:
-        return res_err_format(data=res, status_code=status_code)
-    elif 400 <= status_code < 500 or 500 <= status_code < 600:
-        return res_err_format(data=res, status_code=status_code)
-    else:
-        raise ServerException(
-            msg=f"{res.get('body')}", code=f"{res.status_code}")
+    return res_success(data=res, status_code=201)
