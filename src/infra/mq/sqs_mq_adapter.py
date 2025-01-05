@@ -47,6 +47,7 @@ class SqsMqAdapter:
                 QueueUrl=self.sqs_rsc.queue_url,
                 MaxNumberOfMessages=SQS_MAX_MESSAGES,
                 WaitTimeSeconds=SQS_WAIT_SECS,
+                MessageAttributeNames=['All'],  # 包含所有消息屬性
             )
 
             messages = response.get("Messages", [])
@@ -55,6 +56,9 @@ class SqsMqAdapter:
                     log.info(
                         "SQS[%s]: Message received: %s", self.sqs_label, message["Body"]
                     )
+                    # 如果是 FIFO 隊列，MessageGroupId 是屬性的一部分
+                    if 'Attributes' in message and 'MessageGroupId' in message['Attributes']:
+                        log.info(f"MessageGroupId: {message['Attributes']['MessageGroupId']}")
                     request_body = json.loads(message["Body"])
 
                     async def ack():
