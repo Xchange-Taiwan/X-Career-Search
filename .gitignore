@@ -1,3 +1,4 @@
+**/.DS_Store
 # Distribution / packaging
 .Python
 env/
@@ -15,6 +16,7 @@ var/
 *.egg-info/
 .installed.cfg
 *.egg
+.vscode
 
 # Serverless directories
 .serverless
@@ -25,3 +27,5 @@ venv
 
 **/**.sh
 **.env
+**.env.dev
+**.env.prod

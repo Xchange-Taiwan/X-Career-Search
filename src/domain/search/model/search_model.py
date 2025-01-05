@@ -10,15 +10,15 @@ log.basicConfig(filemode='w', level=log.INFO)
 
 
 class SearchMentorProfileDTO(BaseModel):
-    search_patterns: List[str]
-    filter_positions: List[str]
-    filter_skills: List[str]
-    filter_topics: List[str]
-    filter_expertises: List[str]
-    filter_industries: List[str]
-    sorting_by: SortingBy
-    sorting: Sorting
-    next_id: int
+    search_pattern: Optional[str]
+    filter_positions: Optional[List[str]]
+    filter_skills: Optional[List[str]]
+    filter_topics: Optional[List[str]]
+    filter_expertises: Optional[List[str]]
+    filter_industries: Optional[List[str]]
+    # sorting_by: SortingBy
+    # sorting: Sorting
+    # next_id: int
 
 
 class SearchMentorProfileVO(MentorProfileVO):
@@ -29,3 +29,19 @@ class SearchMentorProfileVO(MentorProfileVO):
 class SearchMentorProfileListVO(BaseModel):
     mentors: List[SearchMentorProfileVO]
     next_id: Optional[int]
+
+
+class ShardInfo(BaseModel):
+    total: int
+    successful: int
+    failed: int
+
+
+class SearchMentorProfileResponseVO(BaseModel):
+    _index: str
+    _id: str
+    _version: int
+    result: str
+    _shards: ShardInfo
+    _seq_no: int
+    _primary_term: int

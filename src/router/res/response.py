@@ -3,6 +3,8 @@ from typing import Optional, Any, Dict
 from pydantic import create_model, BaseModel
 
 # ref: https://github.com/tiangolo/fastapi/issues/3737
+
+
 def idempotent_response(route: str, model: Any) -> (Dict):
     responses: Dict = {
         200: {
@@ -21,12 +23,12 @@ def post_response(route: str, model: Any) -> (Dict):
     return responses
 
 
-def res_success(data=None, msg='ok', code='0'):
+def res_success(data=None, msg='ok', code='0', status_code=200):
     return JSONResponse(content={
         'code': code,
         'msg': msg,
         'data': data,
-    })
+    }, status_code=status_code)
 
 
 def res_err_format(data=None, msg='error', code='1'):

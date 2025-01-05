@@ -10,6 +10,7 @@ from fastapi.responses import JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
 from src.router.v1 import (
     search,
+    search_internal
 )
 from src.config import exception
 
@@ -27,6 +28,7 @@ app.add_middleware(
 
 router_v1 = APIRouter(prefix='/search-service/api/v1')
 router_v1.include_router(search.router)
+router_v1.include_router(search_internal.router)
 
 app.include_router(router_v1)
 
@@ -35,6 +37,7 @@ exception.include_app(app)
 
 @app.get('/search-service/{term}')
 async def info(term: str):
+    print(term == 'yolo')
     if term != 'yolo':
         raise HTTPException(
             status_code=418, detail='Oops! Wrong phrase. Guess again?')

@@ -154,3 +154,20 @@ def raise_http_exception(e: Exception, msg: str = None):
         raise ServerException(msg=msg or e.msg, data=e.data)
     
     raise ServerException(msg=msg)
+
+status_code_mapping = {
+    400: ClientException,
+    401: UnauthorizedException,
+    403: ForbiddenException,
+    404: NotFoundException,
+    406: NotAcceptableException,  # No DuplicateUserException
+    429: TooManyRequestsException,
+    500: ServerException,
+}
+
+
+def raise_http_exception_by_status_code(status_code: int, msg: str = None, data: Any = None):
+    if status_code in status_code_mapping:
+        raise_http_exception(status_code_mapping[status_code](msg, data))
+
+    raise ServerException(msg=msg)
