@@ -1,4 +1,5 @@
 import os
+import asyncio
 from mangum import Mangum
 from fastapi import FastAPI, Request, \
     Header, Path, Query, Body, Form, \
@@ -11,6 +12,11 @@ from fastapi.middleware.cors import CORSMiddleware
 from src.router.v1 import (
     search,
     search_internal
+)
+from src.app._di.injection import (
+    _resource_manager,
+    mq_adapter,
+    _search_service,
 )
 from src.config import exception
 
@@ -25,6 +31,25 @@ app.add_middleware(
     allow_methods=['*'],
     allow_headers=['*'],
 )
+
+@app.on_event('startup')
+async def startup_event():
+    # init global connection pool
+    await _resource_manager.initial()
+    asyncio.create_task(_resource_manager.keeping_probe())
+
+    # subscribe messages(SQS)
+    asyncio.create_task(mq_adapter.subscribe_messages(
+        _search_service.subscribe_mentor_update,
+    ))
+
+
+
+@app.on_event('shutdown')
+async def shutdown_event():
+    # close connection pool
+    await _resource_manager.close()
+
 
 router_v1 = APIRouter(prefix='/search-service/api/v1')
 router_v1.include_router(search.router)

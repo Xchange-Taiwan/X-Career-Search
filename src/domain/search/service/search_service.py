@@ -35,9 +35,19 @@ class SearchService:
 
     async def send_mentor(self, body: MentorProfileDTO):
         user_id = body.user_id
-        json_data = body.to_json()
-        response: ClientResponse = await self.opensearch.put(
-            f"/profiles/_doc/{user_id}", json=json_data
+        json_doc = body.to_json()
+        upsert_body = {
+            "doc": json_doc,
+            "doc_as_upsert": True  # 如果文档不存在则创建
+        }
+        response: ClientResponse = await self.opensearch.post(
+            f"/profiles/_update/{user_id}", json=upsert_body
+        )
+        return response.res_json
+
+    async def delete_mentor(self, user_id: int):
+        response: ClientResponse = await self.opensearch.delete(
+            f"/profiles/_doc/{user_id}"
         )
         return response.res_json
 

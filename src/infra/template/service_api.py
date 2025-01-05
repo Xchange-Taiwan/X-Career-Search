@@ -1,6 +1,6 @@
 from abc import ABC, abstractmethod
 from typing import Dict, Union, Any, Optional
-from .service_response import ServiceApiResponse
+from .client_response import ClientResponse
 
 
 class IServiceApi(ABC):
@@ -9,7 +9,7 @@ class IServiceApi(ABC):
         pass
 
     @abstractmethod
-    async def get(self, url: str, params: Dict = None, headers: Dict = None) -> Optional[ServiceApiResponse]:
+    async def get(self, url: str, params: Dict = None, headers: Dict = None) -> Optional[ClientResponse]:
         pass
 
     @abstractmethod
@@ -17,7 +17,7 @@ class IServiceApi(ABC):
         pass
 
     @abstractmethod
-    async def post(self, url: str, json: Dict, headers: Dict = None) -> Optional[ServiceApiResponse]:
+    async def post(self, url: str, json: Dict, headers: Dict = None) -> Optional[ClientResponse]:
         pass
 
     @abstractmethod
@@ -25,7 +25,7 @@ class IServiceApi(ABC):
         pass
 
     @abstractmethod
-    async def put(self, url: str, json: Dict = None, headers: Dict = None) -> Optional[ServiceApiResponse]:
+    async def put(self, url: str, json: Dict = None, headers: Dict = None) -> Optional[ClientResponse]:
         pass
 
     @abstractmethod
@@ -33,5 +33,5 @@ class IServiceApi(ABC):
         pass
 
     @abstractmethod
-    async def delete(self, url: str, params: Dict = None, headers: Dict = None) -> Optional[ServiceApiResponse]:
+    async def delete(self, url: str, params: Dict = None, headers: Dict = None) -> Optional[ClientResponse]:
         pass
