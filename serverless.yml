@@ -95,6 +95,7 @@ functions:
         - "!package.json"
         - "!package-lock.json"
         - "!.serverless/**"
+        - "!.vscode/**"
         - "!venv/**"
         - "!**/**.sh"
         - "!node_modules/**"

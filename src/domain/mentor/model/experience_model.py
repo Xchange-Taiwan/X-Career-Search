@@ -4,7 +4,7 @@ from pydantic import BaseModel
 from ....config.constant import *
 import logging as log
 
-log.basicConfig(filemode='w', level=log.INFO)
+log.basicConfig(filemode="w", level=log.INFO)
 
 
 class ExperienceDTO(BaseModel):
@@ -13,18 +13,12 @@ class ExperienceDTO(BaseModel):
     mentor_experiences_metadata: Dict = {}
     order: int = 0
 
-    class Config:
-        from_attributes = True
-
 
 class ExperienceVO(BaseModel):
     id: int
     category: ExperienceCategory = None
     mentor_experiences_metadata: Dict = {}
     order: int = 0
-
-    class Config:
-        from_attributes = True
 
 
 class ExperienceListVO(BaseModel):

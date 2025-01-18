@@ -7,8 +7,7 @@ from fastapi import (
 from ...domain.search.model import (
     search_model as search,
 )
-from ...domain.search.service.search_service import SearchService
-from ...infra.api.opensearch import OpenSearch
+from ...app._di.injection import _search_service
 from ..req.search import *
 from ..res.response import *
 from ...config.conf import *
@@ -23,10 +22,6 @@ router = APIRouter(
     prefix='/search/mentors',
     tags=['Search Mentors'],
     responses={404: {'description': 'Not found'}},
-)
-opensearch = OpenSearch()
-_search_service = SearchService(
-    opensearch=opensearch,
 )
 
 
