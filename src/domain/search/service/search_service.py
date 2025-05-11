@@ -52,6 +52,8 @@ class SearchService:
         return response.res_json
 
     async def get_mentor_list(self, query: SearchMentorProfileDTO):
+        if query == None:
+            raise ClientException(msg="Query could not be None")
         response: ClientResponse = await self.opensearch.post(
             f"/profiles/_search",
             params={"request_cache": "true", "pretty": "true"},

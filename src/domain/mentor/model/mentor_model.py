@@ -1,7 +1,7 @@
 import json
 from enum import Enum
 from typing import Any, Dict, List, Optional, Union
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 from fastapi.encoders import jsonable_encoder
 from .experience_model import ExperienceVO
 from ...user.model.user_model import *
@@ -10,6 +10,7 @@ from ...user.model.common_model import (
 )
 from ....config.conf import *
 from ....config.constant import *
+from datetime import datetime, timezone
 import logging as log
 
 log.basicConfig(filemode="w", level=log.INFO)
@@ -22,6 +23,7 @@ class MentorProfileDTO(ProfileDTO):
     expertises: Optional[List[str]] = []
     # Search Service 的 MentorProfileDTO 需要这个字段
     experiences: Optional[List[Dict]] = []
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
 
     class Config:
         from_attributes = True  # orm_mode = True
