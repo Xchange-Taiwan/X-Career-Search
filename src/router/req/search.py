@@ -14,9 +14,9 @@ def format_search_mentors_query(
             }
         },
         "sort": [
-            { "created_at": "asc" }
+            { "updated_at": "asc" }
         ],
-        "size": query.limit or 9
+        "size": query.limit or PAGE_LIMIT
     }
 
     # Conditionally add query_string filters
@@ -48,7 +48,7 @@ def format_search_mentors_query(
         query_body["query"]["bool"]["must"].append(
             {
                 "query_string": {
-                    "default_field": "topics",
+                    "default_field": "expertises",
                     "query": " AND ".join(query.filter_expertises),
                 }
             }
@@ -57,6 +57,7 @@ def format_search_mentors_query(
     if query.filter_industries:
         query_body["query"]["bool"]["must"].append({
             "query_string": {
+                "default_field": "industry",
                 "query": f"*{query.filter_industries}*"
             }
         })
@@ -68,8 +69,9 @@ def format_search_mentors_query(
 
     if query.cursor:
         query_body["query"]["bool"]["filter"].append(
-            {"range": {"created_at": {"gte": query.cursor.isoformat()}}}
+            {"range": {"updated_at": {"gt": query.cursor.isoformat()}}}
         )
+        # query_body["search_after"] = [query.cursor, query.last_id]
 
     # Check if there are any filters added
     if (
@@ -78,6 +80,6 @@ def format_search_mentors_query(
     ):
         # or use an empty query like { "query": { "match_all": {} } }
         # query_body = None
-        query_body = {"query": {"bool": {"must": []}}, "sort": [{ "created_at": "asc" }], "size": query.limit or 9}
+        query_body = {"query": {"bool": {"must": []}}, "sort": [{ "updated_at": "asc" }], "size": query.limit or 9}
 
     return query_body

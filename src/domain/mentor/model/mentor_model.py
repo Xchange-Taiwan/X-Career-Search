@@ -24,6 +24,7 @@ class MentorProfileDTO(ProfileDTO):
     # Search Service 的 MentorProfileDTO 需要这个字段
     experiences: Optional[List[Dict]] = []
     created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+    updated_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
 
     class Config:
         from_attributes = True  # orm_mode = True
@@ -48,7 +49,6 @@ class MentorProfileDTO(ProfileDTO):
 
         dao_dict = jsonable_encoder(dao_dict)
         return dao_dict
-
 
 
 class ProfessionDTO(BaseModel):

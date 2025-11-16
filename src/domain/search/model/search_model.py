@@ -19,7 +19,7 @@ class SearchMentorProfileDTO(BaseModel):
     filter_topics: Optional[List[str]]
     filter_expertises: Optional[List[str]]
     filter_industries: Optional[str]
-    limit: int = 9
+    limit: int = PAGE_LIMIT
     cursor: Optional[datetime]
 
     @field_validator("cursor")
@@ -30,7 +30,7 @@ class SearchMentorProfileDTO(BaseModel):
             value.isoformat()
         except Exception:
             raise ClientException(msg="Cursor must be in ISO 8601 datetime format")
-        
+
         return value
 
 

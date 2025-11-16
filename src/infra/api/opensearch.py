@@ -50,6 +50,7 @@ class OpenSearch:
             base_url=OPENSERACH_DOMAIN_ENDPOINT,
             headers={"Content-Type": "application/json"},
             auth=(OPENSERACH_USERNAME, OPENSERACH_PASSWORD),
+            verify=False,
         )
         # async
         # async with httpx.AsyncClient(

@@ -35,6 +35,7 @@ class SearchService:
 
     async def send_mentor(self, body: MentorProfileDTO):
         user_id = body.user_id
+        body.updated_at = datetime.now(timezone.utc)
         json_doc = body.to_json()
         upsert_body = {
             "doc": json_doc,

@@ -35,7 +35,7 @@ async def mentor_list(
     filter_topics: List[str] = Query(None),
     filter_expertises: List[str] = Query(None),
     filter_industries: str = Query(None),
-    limit: int = Query(9),
+    limit: int = Query(PAGE_LIMIT),
     cursor: datetime = Query(None),
 ):
     search_query_dto = SearchMentorProfileDTO(
