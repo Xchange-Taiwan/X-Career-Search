@@ -1,12 +1,15 @@
 import json
+from datetime import datetime
 from typing import Any, Dict, List, Optional, Union
-from pydantic import BaseModel
+from pydantic import BaseModel, field_validator
 from ...mentor.model.mentor_model import MentorProfileVO
 from ....config.conf import *
 from ....config.constant import *
+from ....config.exception import *
 import logging as log
+from dateutil.parser import isoparse
 
-log.basicConfig(filemode='w', level=log.INFO)
+log.basicConfig(filemode="w", level=log.INFO)
 
 
 class SearchMentorProfileDTO(BaseModel):
@@ -15,10 +18,20 @@ class SearchMentorProfileDTO(BaseModel):
     filter_skills: Optional[List[str]]
     filter_topics: Optional[List[str]]
     filter_expertises: Optional[List[str]]
-    filter_industries: Optional[List[str]]
-    # sorting_by: SortingBy
-    # sorting: Sorting
-    # next_id: int
+    filter_industries: Optional[str]
+    limit: int = PAGE_LIMIT
+    cursor: Optional[datetime]
+
+    @field_validator("cursor")
+    def validate_cursor_format(cls, value: Optional[datetime]):
+        if value is None:
+            return value
+        try:
+            value.isoformat()
+        except Exception:
+            raise ClientException(msg="Cursor must be in ISO 8601 datetime format")
+
+        return value
 
 
 class SearchMentorProfileVO(MentorProfileVO):

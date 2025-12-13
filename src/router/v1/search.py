@@ -1,4 +1,5 @@
 from typing import List
+from datetime import datetime
 from fastapi import (
     APIRouter,
     Request, Depends,
@@ -33,9 +34,9 @@ async def mentor_list(
     filter_skills: List[str] = Query(None),
     filter_topics: List[str] = Query(None),
     filter_expertises: List[str] = Query(None),
-    filter_industries: List[str] = Query(None),
-    # sorting_by: SortingBy = Query(SortingBy.UPDATED_TIME),
-    # sorting: Sorting = Query(Sorting.DESC),
+    filter_industries: str = Query(None),
+    limit: int = Query(PAGE_LIMIT),
+    cursor: datetime = Query(None),
 ):
     search_query_dto = SearchMentorProfileDTO(
         search_pattern=search_pattern,
@@ -44,8 +45,8 @@ async def mentor_list(
         filter_topics=filter_topics,
         filter_expertises=filter_expertises,
         filter_industries=filter_industries,
-        # sorting_by=sorting_by,
-        # sorting=sorting
+        limit=limit,
+        cursor=cursor
     )
     query = format_search_mentors_query(search_query_dto)
     res = await _search_service.get_mentor_list(query)

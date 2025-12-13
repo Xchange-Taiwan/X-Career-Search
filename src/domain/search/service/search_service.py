@@ -35,6 +35,7 @@ class SearchService:
 
     async def send_mentor(self, body: MentorProfileDTO):
         user_id = body.user_id
+        body.updated_at = datetime.now(timezone.utc)
         json_doc = body.to_json()
         upsert_body = {
             "doc": json_doc,
@@ -52,6 +53,8 @@ class SearchService:
         return response.res_json
 
     async def get_mentor_list(self, query: SearchMentorProfileDTO):
+        if query == None:
+            raise ClientException(msg="Query could not be None")
         response: ClientResponse = await self.opensearch.post(
             f"/profiles/_search",
             params={"request_cache": "true", "pretty": "true"},

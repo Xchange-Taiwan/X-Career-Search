@@ -6,18 +6,6 @@ provider:
   stage: dev
   timeout: 30
   region: ap-northeast-1
-  iam:
-    role:
-      statements:
-        - Effect: "Allow"
-          Action:
-            - "es:ESHttpGet"
-            - "es:ESHttpPut"
-            - "es:ESHttpPost"
-            - "es:ESHttpDelete"
-          Resource:
-            - !GetAtt OpenSearchDomain.Arn
-  # - !Sub "arn:aws:es:${self:provider.region}:${aws:accountId}:domain/${self:provider.stage}-opensearch-domain/*"
 
 custom:
   app: x-career-search
@@ -28,64 +16,7 @@ custom:
       description: XChange Career - search
       compatibleRuntimes:
         - python3.9
-  opensearch:
-    instanceType: t3.small.search
-    accessPolicies: fine-grain-access-control
-    deploymentType: "Development and testing"
-resources:
-  Resources:
-    OpenSearchMasterRole:
-      Type: AWS::IAM::Role
-      Properties:
-        AssumeRolePolicyDocument:
-          Version: "2012-10-17"
-          Statement:
-            - Effect: "Allow"
-              Principal:
-                Service: "opensearchservice.amazonaws.com"
-              Action: "sts:AssumeRole"
-        Policies:
-          - PolicyName: "OpenSearchMasterPolicy"
-            PolicyDocument:
-              Version: "2012-10-17"
-              Statement:
-                - Effect: "Allow"
-                  Action: "es:*"
-                  Resource: "*"
-    OpenSearchDomain:
-      Type: "AWS::OpenSearchService::Domain"
-      Properties:
-        DomainName: ${self:provider.stage}-opensearch-domain
-        EngineVersion: "OpenSearch_2.15" # Specify the version you want to use
-        NodeToNodeEncryptionOptions:
-          Enabled: true # Enable node-to-node encryption
-        EncryptionAtRestOptions:
-          Enabled: true # This is often used alongside node-to-node encryption
-        DomainEndpointOptions:
-          EnforceHTTPS: true
-          TLSSecurityPolicy: "Policy-Min-TLS-1-2-2019-07"
-          CustomEndpointEnabled: false
-        ClusterConfig:
-          InstanceType: ${self:custom.opensearch.instanceType}
-          InstanceCount: 1 # Not multi-AZ, thus one instance
-          DedicatedMasterEnabled: false
-          ZoneAwarenessEnabled: false
-        EBSOptions:
-          EBSEnabled: true
-          VolumeType: "gp2"
-          VolumeSize: 10
-        AccessPolicies:
-          Statement:
-            - Effect: Allow
-              Principal:
-                AWS: !GetAtt OpenSearchMasterRole.Arn
-                # AWS: "arn:aws:iam::${AWS::AccountId}:role/${self:custom.app}-${self:provider.stage}-${self:provider.region}-lambdaRole"
-              Action: "es:*"
-              Resource: !Sub "arn:aws:es:${AWS::Region}:${AWS::AccountId}:domain/${self:provider.stage}-opensearch-domain/*"
-        AdvancedSecurityOptions:
-          Enabled: true
-          MasterUserOptions:
-            MasterUserARN: !GetAtt OpenSearchMasterRole.Arn
+
 functions:
   app:
     package:
@@ -106,8 +37,6 @@ functions:
     handler: main.handler
     environment:
       STAGE: ${self:provider.stage}
-      OPENSEARCH_ENDPOINT:
-        !Join ["", ["https://", !GetAtt OpenSearchDomain.DomainEndpoint]]
     layers:
       - { Ref: PythonRequirementsLambdaLayer }
     events:

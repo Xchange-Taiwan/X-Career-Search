@@ -6,6 +6,8 @@ OPENSERACH_DOMAIN_ENDPOINT = os.getenv('OPENSERACH_DOMAIN_ENDPOINT', '')
 OPENSERACH_USERNAME = os.getenv('OPENSERACH_USERNAME', '')
 OPENSERACH_PASSWORD = os.getenv('OPENSERACH_PASSWORD', '')
 
+PAGE_LIMIT = int(os.getenv("PAGE_LIMIT", 9))
+
 # resource probe cycle secs
 PROBE_CYCLE_SECS = int(os.getenv("PROBE_CYCLE_SECS", 3))
 
