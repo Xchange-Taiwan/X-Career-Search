@@ -11,9 +11,9 @@ from ...user.model.common_model import (
 from ....config.conf import *
 from ....config.constant import *
 from datetime import datetime, timezone
-import logging as log
+import logging
 
-log.basicConfig(filemode="w", level=log.INFO)
+log = logging.getLogger(__name__)
 
 
 class MentorProfileDTO(ProfileDTO):
