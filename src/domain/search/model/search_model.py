@@ -6,10 +6,10 @@ from ...mentor.model.mentor_model import MentorProfileVO
 from ....config.conf import *
 from ....config.constant import *
 from ....config.exception import *
-import logging as log
+import logging
 from dateutil.parser import isoparse
 
-log.basicConfig(filemode="w", level=log.INFO)
+log = logging.getLogger(__name__)
 
 
 class SearchMentorProfileDTO(BaseModel):

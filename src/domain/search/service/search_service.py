@@ -4,9 +4,9 @@ from ....domain.search.model.search_model import *
 from ....config.exception import *
 from ....infra.template.client_response import ClientResponse
 import httpx
-import logging as log
+import logging
 
-log.basicConfig(filemode="w", level=log.INFO)
+log = logging.getLogger(__name__)
 
 
 class SearchService:

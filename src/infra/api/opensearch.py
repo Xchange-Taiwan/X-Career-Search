@@ -4,9 +4,9 @@ from src.config.exception import *
 from src.config.conf import *
 from src.router.res.response import *
 from src.infra.template.client_response import ClientResponse
-import logging as log
+import logging
 
-log.basicConfig(filemode="w", level=log.INFO)
+log = logging.getLogger(__name__)
 
 
 def check_response_code(method: str, expected_code: int = 200):

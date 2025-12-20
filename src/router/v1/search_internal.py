@@ -8,9 +8,9 @@ from ..req.search_internal import *
 from ..res.response import *
 from ...config.conf import *
 from ...config.exception import *
-import logging as log
+import logging
 
-log.basicConfig(filemode='w', level=log.INFO)
+log = logging.getLogger(__name__)
 
 
 router = APIRouter(
