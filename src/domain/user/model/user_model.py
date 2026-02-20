@@ -22,6 +22,7 @@ class ProfileDTO(BaseModel):
     topics: Optional[List[Union[str]]] = []
     industry: Optional[str] = ""
     language: Optional[str] = ""
+    is_mentor: Optional[bool] = False
 
 
 class ProfileVO(BaseModel):
@@ -39,3 +40,4 @@ class ProfileVO(BaseModel):
     industry: Optional[ProfessionVO] = None
     onboarding: Optional[bool] = False
     language: Optional[str]
+    is_mentor: Optional[bool] = False

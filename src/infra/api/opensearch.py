@@ -1,4 +1,5 @@
 import httpx
+import base64
 import functools
 from src.config.exception import *
 from src.config.conf import *
@@ -46,10 +47,14 @@ class OpenSearch:
     def __init__(self):
         # Init opensearch connection
         # sync
-        self.http_client = httpx.Client(
+        auth_bytes = f"{OPENSERACH_USERNAME}:{OPENSERACH_PASSWORD}".encode("ascii")
+        base64_auth = base64.b64encode(auth_bytes).decode("ascii")
+        self.http_client = httpx.AsyncClient(
             base_url=OPENSERACH_DOMAIN_ENDPOINT,
-            headers={"Content-Type": "application/json"},
-            auth=(OPENSERACH_USERNAME, OPENSERACH_PASSWORD),
+            headers={
+                "Content-Type": "application/json",
+                "Authorization": f"Basic {base64_auth}",
+            },
             verify=False,
         )
         # async
@@ -69,7 +74,7 @@ class OpenSearch:
         result = None
         response = None
         try:
-            response: httpx.Response = self.http_client.post(
+            response: httpx.Response = await self.http_client.post(
                 url, json=json, params=params, headers=headers
             )
             result = ClientResponse.parse(response)
@@ -109,7 +114,7 @@ class OpenSearch:
         result = None
         response = None
         try:
-            response: httpx.Response = self.http_client.get(
+            response: httpx.Response = await self.http_client.get(
                 url, params=params, headers=headers
             )
             result = ClientResponse.parse(response)
@@ -147,7 +152,7 @@ class OpenSearch:
         result = None
         response = None
         try:
-            response: httpx.Response = self.http_client.put(
+            response: httpx.Response = await self.http_client.put(
                 url, json=json, headers=headers
             )
             result = ClientResponse.parse(response)
@@ -184,7 +189,7 @@ class OpenSearch:
         result = None
         response = None
         try:
-            response: httpx.Response = self.http_client.delete(
+            response: httpx.Response = await self.http_client.delete(
                 url, params=params, headers=headers
             )
             result = ClientResponse.parse(response)

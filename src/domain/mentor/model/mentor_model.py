@@ -23,6 +23,7 @@ class MentorProfileDTO(ProfileDTO):
     expertises: Optional[List[str]] = []
     # Search Service 的 MentorProfileDTO 需要这个字段
     experiences: Optional[List[Dict]] = []
+    outbox_id: int
     created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
     updated_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
 

@@ -5,6 +5,7 @@ from src.infra.resource.manager import (
 from src.infra.resource.handler import *
 from src.infra.mq.sqs_mq_adapter import SqsMqAdapter
 from src.infra.api.opensearch import OpenSearch
+from src.infra.api.async_service_api_adapter import AsyncServiceApiAdapter
 from src.domain.search.service.search_service import SearchService
 from src.config.conf import SQS_QUEUE_URL, SQS_DEAD_LETTER_QUEUE_URL
 
@@ -30,4 +31,5 @@ _queue_adapter = SqsMqAdapter(sqs_rsc=queue_rsc)
 _dlq_adapter = SqsMqAdapter(sqs_rsc=dlq_rsc)
 
 opensearch = OpenSearch()
-_search_service = SearchService(opensearch=opensearch)
+serviceApi = AsyncServiceApiAdapter()
+_search_service = SearchService(opensearch=opensearch, serviceApi=serviceApi)

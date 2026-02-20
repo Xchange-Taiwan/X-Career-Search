@@ -52,11 +52,11 @@ async def startup_event():
         )
     )
     # subscribe DLQ messages(SQS)
-    asyncio.create_task(
-        _dlq_adapter.subscribe_messages(
-            _search_service.subscribe_mentor_update,
-        )
-    )
+    # asyncio.create_task(
+    #     _dlq_adapter.subscribe_messages(
+    #         _search_service.subscribe_mentor_update,
+    #     )
+    # )
 
 
 @app.on_event("shutdown")

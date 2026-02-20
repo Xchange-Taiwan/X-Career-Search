@@ -1,20 +1,21 @@
+from ....infra.template.service_api import IServiceApi
 from ....infra.api.opensearch import OpenSearch
 from ....domain.mentor.model.mentor_model import *
 from ....domain.search.model.search_model import *
+from ....domain.search.model.outbox_message_model import *
 from ....config.exception import *
 from ....infra.template.client_response import ClientResponse
-import httpx
 import logging
 
 log = logging.getLogger(__name__)
 
-
+POST_OUTBOX_URL = USER_SERVICE_URL + "/v1/internal/outbox/{message_id}"
 class SearchService:
-    def __init__(self, opensearch: OpenSearch):
+    def __init__(self, opensearch: OpenSearch, serviceApi: IServiceApi):
         self.opensearch = opensearch
+        self.service_api = serviceApi
 
     # TODO: Combine Http request with make_request
-
     async def make_request(self, method: str, **kwargs):
         if method == "put":
             response: ClientResponse = await self.opensearch.http_client.put(
@@ -28,10 +29,13 @@ class SearchService:
 
     async def subscribe_mentor_update(self, event: Dict):
         ack = event.pop("ack", None)
-        body = MentorProfileDTO(**event)
-        res = await self.send_mentor(body)
-        if ack:
-            await ack()
+        try:
+            body = MentorProfileDTO(**event)
+            await self.send_mentor(body)
+            if ack:
+                await ack()
+        except Exception as e:
+            log.error(f"Failed to process message: {e}")
 
     async def send_mentor(self, body: MentorProfileDTO):
         user_id = body.user_id
@@ -41,10 +45,39 @@ class SearchService:
             "doc": json_doc,
             "doc_as_upsert": True  # 如果文档不存在则创建
         }
-        response: ClientResponse = await self.opensearch.post(
-            f"/profiles/_update/{user_id}", json=upsert_body
-        )
-        return response.res_json
+        if body.is_mentor:
+            response: ClientResponse = await self.opensearch.post(
+                f"/profiles/_update/{user_id}", json=upsert_body
+            )
+
+            formatted_url = POST_OUTBOX_URL.format(message_id=body.outbox_id)
+
+            if 200 <= response.status_code < 300:
+                log.info("OpenSearch update successful.")
+
+                outbox_payload = OutboxMessageDTO(status=OutboxStatus.SUCCESS)
+
+                await self.service_api.simple_put(
+                    url=formatted_url, 
+                    json=outbox_payload.model_dump()
+                )
+            else:
+                error_text = await response.text()
+                log.error("OpenSearch failed with status %s: %s", response.status, error_text)
+
+                outbox_payload = OutboxMessageDTO(
+                    status=OutboxStatus.FAILED,
+                    error_msg=f"OpenSearch error: {error_text[:100]}" # restrict the error message length
+                )
+
+                await self.service_api.simple_put(
+                    url=formatted_url, 
+                    json=outbox_payload.model_dump()
+                )
+
+            return response.res_json
+        else:
+            log.info("Skip saving profile to Elasticsearch. is_mentor: %s", body.is_mentor)
 
     async def delete_mentor(self, user_id: int):
         response: ClientResponse = await self.opensearch.delete(

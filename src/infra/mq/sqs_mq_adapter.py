@@ -59,12 +59,15 @@ class SqsMqAdapter:
                     # 如果是 FIFO 隊列，MessageGroupId 是屬性的一部分
                     if 'Attributes' in message and 'MessageGroupId' in message['Attributes']:
                         log.info(f"MessageGroupId: {message['Attributes']['MessageGroupId']}")
-                    request_body = json.loads(message["Body"])
+                    outbox_id = json.loads(message["Body"])["record"]["id"]
+                    request_body = json.loads(message["Body"])["record"]["payload"]
+                    request_body["outbox_id"] = outbox_id
 
+                    receipt_handle = message["ReceiptHandle"]
                     async def ack():
                         await sqs_client.delete_message(
                             QueueUrl=self.sqs_rsc.queue_url,
-                            ReceiptHandle=message["ReceiptHandle"],
+                            ReceiptHandle=receipt_handle,
                         )
 
                     # ack: handled by callee

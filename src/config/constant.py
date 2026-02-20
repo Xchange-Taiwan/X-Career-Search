@@ -1,4 +1,4 @@
-from enum import Enum
+from enum import Enum, IntEnum
 
 
 class Language(Enum):
@@ -48,6 +48,11 @@ class ReservationListState(Enum):
     PENDING = 'PENDING'
     HISTORY = 'HISTORY'
 
+class OutboxStatus(IntEnum):
+    INITIAL = 0
+    PENDING = 1
+    FAILED = 2
+    SUCCESS = 3
 
 class SortingBy(Enum):
     UPDATED_TIME = 'UPDATED_TIME'

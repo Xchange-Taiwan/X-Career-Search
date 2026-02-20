@@ -6,6 +6,8 @@ OPENSERACH_DOMAIN_ENDPOINT = os.getenv('OPENSERACH_DOMAIN_ENDPOINT', '')
 OPENSERACH_USERNAME = os.getenv('OPENSERACH_USERNAME', '')
 OPENSERACH_PASSWORD = os.getenv('OPENSERACH_PASSWORD', '')
 
+USER_SERVICE_URL = os.getenv('USER_SERVICE_URL', 'http://127.0.0.1:8010/user-service/api')
+
 PAGE_LIMIT = int(os.getenv("PAGE_LIMIT", 9))
 
 # resource probe cycle secs
