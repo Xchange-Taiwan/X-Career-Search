@@ -166,8 +166,31 @@ status_code_mapping = {
 }
 
 
-def raise_http_exception_by_status_code(status_code: int, msg: str = None, data: Any = None):
-    if status_code in status_code_mapping:
-        raise_http_exception(status_code_mapping[status_code](msg, data))
+def raise_http_exception_by_status_code(status_code: int, msg: Any = None, data: Any = None):
+    """ES/OpenSearch 錯誤 body 常為 dict，不可當作 HTTP 回應的 msg 字串。"""
+    exc_cls = status_code_mapping.get(status_code)
+    if exc_cls is None:
+        raise ServerException(
+            msg=str(msg) if msg is not None else "error",
+            data=data,
+        )
 
-    raise ServerException(msg=msg)
+    err_text: str
+    err_data: Any = data
+    if isinstance(msg, str):
+        err_text = msg
+    else:
+        if err_data is None:
+            err_data = msg
+        if status_code == status.HTTP_404_NOT_FOUND:
+            err_text = "Not found"
+        elif status_code == status.HTTP_400_BAD_REQUEST:
+            err_text = "Bad request"
+        elif status_code == status.HTTP_401_UNAUTHORIZED:
+            err_text = "Unauthorized"
+        elif status_code == status.HTTP_403_FORBIDDEN:
+            err_text = "Forbidden"
+        else:
+            err_text = str(msg)[:1000] if msg is not None else "Error"
+
+    raise exc_cls(msg=err_text, data=err_data)

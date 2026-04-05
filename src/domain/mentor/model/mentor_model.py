@@ -1,33 +1,33 @@
 import json
-from enum import Enum
-from typing import Any, Dict, List, Optional, Union
-from pydantic import BaseModel, Field
-from fastapi.encoders import jsonable_encoder
-from .experience_model import ExperienceVO
-from ...user.model.user_model import *
-from ...user.model.common_model import (
-    ProfessionListVO,
-)
-from ....config.conf import *
-from ....config.constant import *
-from datetime import datetime, timezone
 import logging
+from datetime import datetime, timezone
+from enum import Enum
+from typing import Any, Dict, List, Optional
+
+from fastapi.encoders import jsonable_encoder
+from pydantic import BaseModel, Field
+
+from .experience_model import ExperienceVO
+from ...user.model.common_model import ProfessionListVO
+from ...user.model.user_model import ProfileDTO, ProfileVO
+from ....config.constant import SeniorityLevel
 
 log = logging.getLogger(__name__)
 
 
 class MentorProfileDTO(ProfileDTO):
-    personal_statement: Optional[str] = ""
-    about: Optional[str] = ""
-    seniority_level: Optional[SeniorityLevel] = SeniorityLevel.NO_REVEAL
-    expertises: Optional[List[str]] = []
-    # Search Service 的 MentorProfileDTO 需要这个字段
-    experiences: Optional[List[Dict]] = []
+    """與 X-Career-User `MentorProfileDTO` 相同欄位；下列為寫入索引額外欄位。"""
+
+    personal_statement: Optional[str]
+    about: Optional[str]
+    seniority_level: Optional[SeniorityLevel]
+    expertises: Optional[List[str]]
+    experiences: Optional[List[Dict]] = Field(default_factory=list)
     created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
     updated_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
 
     class Config:
-        from_attributes = True  # orm_mode = True
+        from_attributes = True
 
     def to_json(self) -> Dict:
         dao_dict = {}
@@ -63,4 +63,4 @@ class MentorProfileVO(ProfileVO):
     about: Optional[str] = ""
     seniority_level: Optional[SeniorityLevel] = SeniorityLevel.NO_REVEAL
     expertises: Optional[ProfessionListVO] = None
-    experiences: Optional[List[ExperienceVO]] = []
+    experiences: Optional[List[ExperienceVO]] = Field(default_factory=list)
