@@ -4,9 +4,9 @@ from ....domain.search.model.search_model import *
 from ....config.exception import *
 from ....infra.template.client_response import ClientResponse
 import httpx
-import logging as log
+import logging
 
-log.basicConfig(filemode="w", level=log.INFO)
+log = logging.getLogger(__name__)
 
 
 class SearchService:
@@ -35,13 +35,26 @@ class SearchService:
 
     async def send_mentor(self, body: MentorProfileDTO):
         user_id = body.user_id
-        json_data = body.to_json()
-        response: ClientResponse = await self.opensearch.put(
-            f"/profiles/_doc/{user_id}", json=json_data
+        body.updated_at = datetime.now(timezone.utc)
+        json_doc = body.to_json()
+        upsert_body = {
+            "doc": json_doc,
+            "doc_as_upsert": True  # 如果文档不存在则创建
+        }
+        response: ClientResponse = await self.opensearch.post(
+            f"/profiles/_update/{user_id}", json=upsert_body
+        )
+        return response.res_json
+
+    async def delete_mentor(self, user_id: int):
+        response: ClientResponse = await self.opensearch.delete(
+            f"/profiles/_doc/{user_id}"
         )
         return response.res_json
 
     async def get_mentor_list(self, query: SearchMentorProfileDTO):
+        if query == None:
+            raise ClientException(msg="Query could not be None")
         response: ClientResponse = await self.opensearch.post(
             f"/profiles/_search",
             params={"request_cache": "true", "pretty": "true"},

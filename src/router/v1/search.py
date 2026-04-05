@@ -1,4 +1,5 @@
 from typing import List
+from datetime import datetime
 from fastapi import (
     APIRouter,
     Request, Depends,
@@ -7,26 +8,21 @@ from fastapi import (
 from ...domain.search.model import (
     search_model as search,
 )
-from ...domain.search.service.search_service import SearchService
-from ...infra.api.opensearch import OpenSearch
+from ...app._di.injection import _search_service
 from ..req.search import *
 from ..res.response import *
 from ...config.conf import *
 from ...config.constant import *
 from ...config.exception import *
-import logging as log
+import logging
 
-log.basicConfig(filemode='w', level=log.INFO)
+log = logging.getLogger(__name__)
 
 
 router = APIRouter(
     prefix='/search/mentors',
     tags=['Search Mentors'],
     responses={404: {'description': 'Not found'}},
-)
-opensearch = OpenSearch()
-_search_service = SearchService(
-    opensearch=opensearch,
 )
 
 
@@ -38,9 +34,9 @@ async def mentor_list(
     filter_skills: List[str] = Query(None),
     filter_topics: List[str] = Query(None),
     filter_expertises: List[str] = Query(None),
-    filter_industries: List[str] = Query(None),
-    # sorting_by: SortingBy = Query(SortingBy.UPDATED_TIME),
-    # sorting: Sorting = Query(Sorting.DESC),
+    filter_industries: str = Query(None),
+    limit: int = Query(PAGE_LIMIT),
+    cursor: datetime = Query(None),
 ):
     search_query_dto = SearchMentorProfileDTO(
         search_pattern=search_pattern,
@@ -49,8 +45,8 @@ async def mentor_list(
         filter_topics=filter_topics,
         filter_expertises=filter_expertises,
         filter_industries=filter_industries,
-        # sorting_by=sorting_by,
-        # sorting=sorting
+        limit=limit,
+        cursor=cursor
     )
     query = format_search_mentors_query(search_query_dto)
     res = await _search_service.get_mentor_list(query)
