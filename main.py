@@ -23,6 +23,8 @@ from src.app._di.injection import (
     _queue_adapter,
     _dlq_adapter,
     _search_service,
+    _index_initializer,
+    PROFILES_INDEX_MAPPING,
 )
 from src.config import exception
 
@@ -41,6 +43,9 @@ app.add_middleware(
 
 @app.on_event("startup")
 async def startup_event():
+    # ensure OpenSearch index exists with the correct mapping
+    await _index_initializer.ensure_index("profiles", PROFILES_INDEX_MAPPING)
+
     # init global connection pool
     await _resource_manager.initial()
     asyncio.create_task(_resource_manager.keeping_probe())
