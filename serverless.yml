@@ -1,5 +1,11 @@
 service: x-career-search
+app: x-career-search
+
 frameworkVersion: "3"
+
+package:
+  individually: true
+
 provider:
   name: aws
   runtime: python3.9
@@ -11,61 +17,66 @@ provider:
       statements:
       - Effect: Allow
         Action:
-          - logs:CreateLogGroup
-          - logs:TagResource
+        - logs:CreateLogGroup
+        - logs:TagResource
         Resource:
-          - arn:aws:logs:${env:THE_REGION}:${env:ACCOUNT_ID}:log-group:/aws/lambda/${self:service}-${self:provider.stage}-app
+        - arn:aws:logs:${env:THE_REGION}:${env:ACCOUNT_ID}:log-group:/aws/lambda/${self:service}-${self:provider.stage}-app
       - Effect: Allow
         Action:
-          - logs:CreateLogStream
-          - logs:PutLogEvents
+        - logs:CreateLogStream
+        - logs:PutLogEvents
         Resource:
-          - arn:aws:logs:${env:THE_REGION}:${env:ACCOUNT_ID}:log-group:/aws/lambda/${self:service}-${self:provider.stage}-app:*
-      - Effect: "Allow"
-        Action:
-          - "es:ESHttpGet"
-          - "es:ESHttpPut"
-          - "es:ESHttpPost"
-          - "es:ESHttpDelete"
-        Resource:
-          - !GetAtt OpenSearchDomain.Arn
-  # - !Sub "arn:aws:es:${self:provider.region}:${aws:accountId}:domain/${self:provider.stage}-opensearch-domain/*"
+        - arn:aws:logs:${env:THE_REGION}:${env:ACCOUNT_ID}:log-group:/aws/lambda/${self:service}-${self:provider.stage}-app:*
+      # - Effect: "Allow"
+      #   Action:
+      #   - "es:ESHttpGet"
+      #   - "es:ESHttpPut"
+      #   - "es:ESHttpPost"
+      #   - "es:ESHttpDelete"
+      #   Resource:
+      #   - arn:aws:es:${env:THE_REGION}:${env:ACCOUNT_ID}:domain/*
 
 custom:
-  app: x-career-search
   pythonRequirements:
     dockerizePip: true
     layer:
-      name: ${self:custom.app}
-      description: XChange Career - search
+      name: x-career-search
+      description: XChange Career - Search
       compatibleRuntimes:
-        - python3.9
+      - python3.9
 
 functions:
   app:
     package:
-      individually: true
       patterns:
-        - "!requirements.txt"
-        - "!package.json"
-        - "!package-lock.json"
-        - "!.serverless/**"
-        - "!.vscode/**"
-        - "!venv/**"
-        - "!**/**.sh"
-        - "!node_modules/**"
-        - "!integration/**"
-        - "!test/**"
-        - "!__pycache__/**"
-        - "!**/__pycache__/**"
+      - "!requirements.txt"
+      - "!package.json"
+      - "!package-lock.json"
+      - "!.serverless/**"
+      - "!.github/**"
+      - "!.idea/**"
+      - "!.vscode/**"
+      - "!venv/**"
+      - "!**/**.sh"
+      - "!node_modules/**"
+      - "!integration/**"
+      - "!test/**"
+      - "!__pycache__/**"
+      - "!**/__pycache__/**"
+
     handler: main.handler
+    timeout: 30
     environment:
       STAGE: ${self:provider.stage}
     layers:
-      - { Ref: PythonRequirementsLambdaLayer }
+    - { Ref: PythonRequirementsLambdaLayer }
     events:
-      - http:
-          method: any
-          path: /{proxy+}
+    - http:
+        method: any
+        path: /{proxy+}
+        cors:
+          origin: '*'
+          headers: '*'
+          allowCredentials: false
 plugins:
   - serverless-python-requirements
