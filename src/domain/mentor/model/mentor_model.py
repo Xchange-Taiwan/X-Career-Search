@@ -18,10 +18,10 @@ log = logging.getLogger(__name__)
 class MentorProfileDTO(ProfileDTO):
     """與 X-Career-User `MentorProfileDTO` 相同欄位；下列為寫入索引額外欄位。"""
 
-    personal_statement: Optional[str]
-    about: Optional[str]
-    seniority_level: Optional[SeniorityLevel]
-    expertises: Optional[List[str]]
+    personal_statement: Optional[str] = None
+    about: Optional[str] = None
+    seniority_level: Optional[SeniorityLevel] = None
+    expertises: Optional[List[str]] = None
     experiences: Optional[List[Dict]] = Field(default_factory=list)
     created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
     updated_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
