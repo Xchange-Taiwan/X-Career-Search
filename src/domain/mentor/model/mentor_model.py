@@ -10,7 +10,7 @@ from pydantic import BaseModel, Field
 from .experience_model import ExperienceVO
 from ...user.model.common_model import ProfessionListVO
 from ...user.model.user_model import ProfileDTO, ProfileVO
-from ....config.constant import SeniorityLevel
+from ....config.constant import SeniorityLevel, MentorAction
 
 log = logging.getLogger(__name__)
 
@@ -25,13 +25,21 @@ class MentorProfileDTO(ProfileDTO):
     experiences: Optional[List[Dict]] = Field(default_factory=list)
     created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
     updated_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+    # SQS routing field – consumed by the Search service command registry;
+    # excluded from the OpenSearch document via to_json().
+    action: Optional[MentorAction] = None
 
     class Config:
         from_attributes = True
 
+    # Fields that exist only for SQS routing and must never be persisted to OpenSearch.
+    _EXCLUDE_FROM_DOC = {"action"}
+
     def to_json(self) -> Dict:
         dao_dict = {}
         for key in self.model_fields.keys():
+            if key in self._EXCLUDE_FROM_DOC:
+                continue
             value = getattr(self, key)
             if value is None:
                 continue
