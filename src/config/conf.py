@@ -2,6 +2,9 @@ import os
 from dotenv import load_dotenv
 load_dotenv()
 
+# 與 X-Career-User 預設一致（語系 / ProfileDTO.language）
+DEFAULT_LANGUAGE = os.getenv('DEFAULT_LANGUAGE', 'zh_TW')
+
 OPENSERACH_DOMAIN_ENDPOINT = os.getenv('OPENSERACH_DOMAIN_ENDPOINT', '')
 OPENSERACH_USERNAME = os.getenv('OPENSERACH_USERNAME', '')
 OPENSERACH_PASSWORD = os.getenv('OPENSERACH_PASSWORD', '')
