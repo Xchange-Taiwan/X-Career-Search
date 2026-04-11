@@ -6,6 +6,7 @@ from ....domain.mentor.model.mentor_model import MentorProfileDTO
 from ....domain.search.model.search_model import SearchMentorProfileDTO
 from ....config.constant import MentorAction
 from ....config.exception import ClientException
+from ....config.conf import PROFILE_STR_DEFAULT_FIELDS
 from ....infra.template.client_response import ClientResponse
 import logging
 
@@ -111,11 +112,18 @@ class SearchService:
         )
         data = response.res_json
         hits = data.get("hits", {}).get("hits", [])
-        return [hit["_source"] for hit in hits]
+        mentors = []
+        for hit in hits:
+            source = hit["_source"]
+            [source.setdefault(f, "") for f in PROFILE_STR_DEFAULT_FIELDS]
+            mentors.append(source)
+        return {"mentors": mentors, "next_id": None}
 
     async def get_mentor(self, user_id: int):
         response: ClientResponse = await self.opensearch.get(
             f"/profiles/_doc/{user_id}", params={"pretty": "true"}
         )
         data = response.res_json
-        return data.get("_source", {})
+        source = data.get("_source", {})
+        [source.setdefault(f, "") for f in PROFILE_STR_DEFAULT_FIELDS]
+        return source

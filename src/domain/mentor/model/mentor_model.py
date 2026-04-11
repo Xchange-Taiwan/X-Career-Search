@@ -43,11 +43,7 @@ class MentorProfileDTO(ProfileDTO):
             value = getattr(self, key)
             if value is None:
                 continue
-            elif (
-                isinstance(value, str)
-                or isinstance(value, list)
-                or isinstance(value, dict)
-            ):
+            elif isinstance(value, (list, dict)):
                 if len(value) == 0:
                     continue
             elif isinstance(value, Enum):
