@@ -1,8 +1,11 @@
 from src.config.logging_config import init_logging
 log = init_logging()
 
-import os
 import asyncio
+import json
+import os
+from typing import Any, Dict, List
+
 from mangum import Mangum
 from fastapi import (
     FastAPI,
@@ -19,9 +22,6 @@ from fastapi.responses import JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
 from src.router.v1 import search, search_internal
 from src.app._di.injection import (
-    _resource_manager,
-    _queue_adapter,
-    _dlq_adapter,
     _search_service,
     _index_initializer,
     PROFILES_INDEX_MAPPING,
@@ -43,31 +43,7 @@ app.add_middleware(
 
 @app.on_event("startup")
 async def startup_event():
-    # ensure OpenSearch index exists with the correct mapping
     await _index_initializer.ensure_index("profiles", PROFILES_INDEX_MAPPING)
-
-    # init global connection pool
-    await _resource_manager.initial()
-    asyncio.create_task(_resource_manager.keeping_probe())
-
-    # subscribe messages(SQS)
-    asyncio.create_task(
-        _queue_adapter.subscribe_messages(
-            _search_service.subscribe_mentor_update,
-        )
-    )
-    # subscribe DLQ messages(SQS)
-    asyncio.create_task(
-        _dlq_adapter.subscribe_messages(
-            _search_service.subscribe_mentor_update,
-        )
-    )
-
-
-@app.on_event("shutdown")
-async def shutdown_event():
-    # close connection pool
-    await _resource_manager.close()
 
 
 router_v1 = APIRouter(prefix="/search-service/api/v1")
@@ -87,5 +63,38 @@ async def info(term: str):
     return JSONResponse(content={"mention": "You only live once."})
 
 
-# Mangum Handler, this is so important
-handler = Mangum(app)
+# ── SQS event source mapping handler ─────────────────────────────────────────
+# 當 AWS 透過 SQS event source mapping 觸發時，event["Records"][0]["eventSource"]
+# 會是 "aws:sqs"，與 API Gateway event 的結構完全不同，Mangum 無法處理。
+# 在同一個 Lambda function 裡做 dispatch，保持 Lambda 數量不變。
+
+async def _handle_sqs_async(event: Dict[str, Any]) -> Dict[str, Any]:
+    records: List[Dict[str, Any]] = event.get("Records", []) or []
+    batch_item_failures: List[Dict[str, str]] = []
+
+    for record in records:
+        message_id = record.get("messageId")
+        try:
+            body = record.get("body")
+            if not body:
+                raise ValueError(f"empty SQS record body, messageId={message_id}")
+            payload: Dict[str, Any] = json.loads(body)
+            await _search_service.subscribe_mentor_update(payload)
+        except Exception as e:
+            log.error(
+                "[SQS] failed to process messageId=%s: %s", message_id, str(e)
+            )
+            if message_id:
+                batch_item_failures.append({"itemIdentifier": message_id})
+
+    return {"batchItemFailures": batch_item_failures}
+
+
+_mangum_handler = Mangum(app)
+
+
+def handler(event: Dict[str, Any], context: Any) -> Any:
+    records = event.get("Records")
+    if records and records[0].get("eventSource") == "aws:sqs":
+        return asyncio.run(_handle_sqs_async(event))
+    return _mangum_handler(event, context)
