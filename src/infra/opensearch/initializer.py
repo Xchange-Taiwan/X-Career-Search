@@ -1,13 +1,58 @@
-from typing import Dict
+from typing import Dict, List
+
 from src.infra.api.opensearch import OpenSearch
 import logging
 
 log = logging.getLogger(__name__)
 
 
+def _expected_nested_field_names(mapping: Dict) -> List[str]:
+    props = mapping.get("mappings", {}).get("properties", {}) or {}
+    return [name for name, spec in props.items() if (spec or {}).get("type") == "nested"]
+
+
 class IndexInitializer:
     def __init__(self, opensearch: OpenSearch):
         self.opensearch = opensearch
+
+    def _warn_if_mapping_mismatch(self, index: str, mapping: Dict) -> None:
+        """
+        If the index already existed with an older dynamic mapping (e.g. `interested_positions`
+        as `text`), writes with nested objects fail with document_parsing_exception. Field types
+        cannot be changed in place; operators must reindex or delete and recreate the index.
+        """
+        expected_nested = set(_expected_nested_field_names(mapping))
+        if not expected_nested:
+            return
+        try:
+            response = self.opensearch.http_client.get(f"/{index}/_mapping")
+            if response.status_code != 200:
+                return
+            body = response.json()
+            idx_entry = body.get(index, {}) or {}
+            props = idx_entry.get("mappings", {}).get("properties", {}) or {}
+            for field in sorted(expected_nested):
+                spec = props.get(field) or {}
+                actual = spec.get("type")
+                if actual is None:
+                    continue
+                if actual != "nested":
+                    log.error(
+                        "[IndexInitializer] index '%s': field '%s' is mapped as '%s' but "
+                        "this service expects 'nested'. OpenSearch cannot convert types in place; "
+                        "create a new index using the app mapping, reindex documents, switch alias "
+                        "(or delete '%s' and let startup recreate it — data loss — then backfill).",
+                        index,
+                        field,
+                        actual,
+                        index,
+                    )
+        except Exception as e:
+            log.warning(
+                "[IndexInitializer] could not verify OpenSearch mapping for '%s': %s",
+                index,
+                e,
+            )
 
     async def ensure_index(self, index: str, mapping: Dict) -> bool:
         """
@@ -33,6 +78,7 @@ class IndexInitializer:
             error_type = body.get("error", {}).get("type", "")
             if response.status_code == 400 and error_type == "resource_already_exists_exception":
                 log.info("[IndexInitializer] index '%s' already exists – skipping.", index)
+                self._warn_if_mapping_mismatch(index, mapping)
                 return False
 
             log.error(

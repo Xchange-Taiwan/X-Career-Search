@@ -27,14 +27,16 @@ provider:
         - logs:PutLogEvents
         Resource:
         - arn:aws:logs:${env:THE_REGION}:${env:ACCOUNT_ID}:log-group:/aws/lambda/${self:service}-${self:provider.stage}-app:*
-      # - Effect: "Allow"
-      #   Action:
-      #   - "es:ESHttpGet"
-      #   - "es:ESHttpPut"
-      #   - "es:ESHttpPost"
-      #   - "es:ESHttpDelete"
-      #   Resource:
-      #   - arn:aws:es:${env:THE_REGION}:${env:ACCOUNT_ID}:domain/*
+      # SQS event source mapping 需要的權限
+      - Effect: Allow
+        Action:
+        - sqs:ReceiveMessage
+        - sqs:DeleteMessage
+        - sqs:GetQueueAttributes
+        - sqs:ChangeMessageVisibility
+        Resource:
+        - arn:aws:sqs:${env:THE_REGION}:${env:ACCOUNT_ID}:X_CAREER_USER_DUPLICATE_QUEUE.fifo
+        - arn:aws:sqs:${env:THE_REGION}:${env:ACCOUNT_ID}:X_CAREER_USER_DUPLICATE_DLQ.fifo
 
 custom:
   pythonRequirements:
@@ -78,5 +80,13 @@ functions:
           origin: '*'
           headers: '*'
           allowCredentials: false
+    # SQS event source mapping：同一個 Lambda 兼任 SQS consumer
+    # batchItemFailures 讓失敗的訊息自動重試 / 進 DLQ，不影響同 batch 其他成功訊息
+    # FIFO queue：不可設定 maximumBatchingWindow（Lambda API 會回 400）
+    - sqs:
+        arn: arn:aws:sqs:${env:THE_REGION}:${env:ACCOUNT_ID}:X_CAREER_USER_DUPLICATE_QUEUE.fifo
+        batchSize: 10
+        functionResponseType: ReportBatchItemFailures
+
 plugins:
   - serverless-python-requirements
