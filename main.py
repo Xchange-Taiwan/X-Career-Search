@@ -93,8 +93,25 @@ async def _handle_sqs_async(event: Dict[str, Any]) -> Dict[str, Any]:
 _mangum_handler = Mangum(app)
 
 
+def _ensure_thread_event_loop() -> None:
+    """
+    Mangum 0.19 在處理請求時會呼叫 asyncio.get_event_loop()。
+    若同一個 warm execution environment 先前跑過 SQS 分支的 asyncio.run()，
+    asyncio 會把主執行緒的 loop 關掉並 set_event_loop(None)，之後 HTTP 進 Mangum
+    就會出現「There is no current event loop in thread 'MainThread'」。
+    """
+    try:
+        loop = asyncio.get_event_loop()
+        if not loop.is_closed():
+            return
+    except RuntimeError:
+        pass
+    asyncio.set_event_loop(asyncio.new_event_loop())
+
+
 def handler(event: Dict[str, Any], context: Any) -> Any:
     records = event.get("Records")
     if records and records[0].get("eventSource") == "aws:sqs":
         return asyncio.run(_handle_sqs_async(event))
+    _ensure_thread_event_loop()
     return _mangum_handler(event, context)
