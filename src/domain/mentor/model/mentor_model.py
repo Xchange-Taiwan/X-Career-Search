@@ -10,9 +10,83 @@ from pydantic import BaseModel, Field
 from .experience_model import ExperienceVO
 from ...user.model.common_model import ProfessionListVO
 from ...user.model.user_model import ProfileDTO, ProfileVO
-from ....config.constant import SeniorityLevel, MentorAction
+from ....config.constant import (
+    InterestCategory,
+    ProfessionCategory,
+    SeniorityLevel,
+    MentorAction,
+)
 
 log = logging.getLogger(__name__)
+
+
+def _expand_interest_strings(
+    items: List[Any], category: InterestCategory, language: Optional[str]
+) -> List[Dict[str, Any]]:
+    """Map ProfileDTO `List[str]` (subject_group codes) to OpenSearch nested interest docs."""
+    lang = language or ""
+    out: List[Dict[str, Any]] = []
+    for i, raw in enumerate(items):
+        if isinstance(raw, dict):
+            out.append(raw)
+            continue
+        if not isinstance(raw, str):
+            continue
+        out.append(
+            {
+                "id": i + 1,
+                "subject": raw,
+                "subject_group": raw,
+                "category": category.value,
+                "language": lang,
+                "desc": {},
+            }
+        )
+    return out
+
+
+def _expand_expertise_strings(
+    items: List[Any], language: Optional[str]
+) -> List[Dict[str, Any]]:
+    """Map `List[str]` subject_groups to OpenSearch nested `expertises` docs."""
+    lang = language or ""
+    out: List[Dict[str, Any]] = []
+    for i, raw in enumerate(items):
+        if isinstance(raw, dict):
+            out.append(raw)
+            continue
+        if not isinstance(raw, str):
+            continue
+        out.append(
+            {
+                "id": i + 1,
+                "subject": raw,
+                "subject_group": raw,
+                "category": ProfessionCategory.EXPERTISE.value,
+                "language": lang,
+                "profession_metadata": {},
+            }
+        )
+    return out
+
+
+def _profile_doc_for_opensearch(doc: Dict[str, Any], language: Optional[str]) -> Dict[str, Any]:
+    """Align HTTP/SQS payload (string lists) with `PROFILES_INDEX_MAPPING` nested fields."""
+    if doc.get("interested_positions"):
+        doc["interested_positions"] = _expand_interest_strings(
+            doc["interested_positions"], InterestCategory.INTERESTED_POSITION, language
+        )
+    if doc.get("skills"):
+        doc["skills"] = _expand_interest_strings(
+            doc["skills"], InterestCategory.SKILL, language
+        )
+    if doc.get("topics"):
+        doc["topics"] = _expand_interest_strings(
+            doc["topics"], InterestCategory.TOPIC, language
+        )
+    if doc.get("expertises"):
+        doc["expertises"] = _expand_expertise_strings(doc["expertises"], language)
+    return doc
 
 
 class MentorProfileDTO(ProfileDTO):
@@ -52,7 +126,7 @@ class MentorProfileDTO(ProfileDTO):
             dao_dict[key] = value
 
         dao_dict = jsonable_encoder(dao_dict)
-        return dao_dict
+        return _profile_doc_for_opensearch(dao_dict, self.language)
 
 
 class ProfessionDTO(BaseModel):

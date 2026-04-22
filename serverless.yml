@@ -82,10 +82,10 @@ functions:
           allowCredentials: false
     # SQS event source mapping：同一個 Lambda 兼任 SQS consumer
     # batchItemFailures 讓失敗的訊息自動重試 / 進 DLQ，不影響同 batch 其他成功訊息
+    # FIFO queue：不可設定 maximumBatchingWindow（Lambda API 會回 400）
     - sqs:
         arn: arn:aws:sqs:${env:THE_REGION}:${env:ACCOUNT_ID}:X_CAREER_USER_DUPLICATE_QUEUE.fifo
         batchSize: 10
-        maximumBatchingWindow: 2
         functionResponseType: ReportBatchItemFailures
 
 plugins:
