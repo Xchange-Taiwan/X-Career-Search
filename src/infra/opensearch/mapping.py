@@ -26,6 +26,10 @@ PROFILES_INDEX_MAPPING: Dict = {
                 "fields": {"keyword": {"type": "keyword", "ignore_above": 256}},
             },
             "avatar": {"type": "keyword"},
+            # Unix epoch seconds; bumped only when the avatar URL actually
+            # changes. Mirrors X-Career-User Profile.avatar_updated_at and is
+            # used by the frontend as a cache buster on the stable S3 URL.
+            "avatar_updated_at": {"type": "long"},
             "location": {"type": "keyword"},
             "job_title": {
                 "type": "text",

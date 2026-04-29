@@ -15,6 +15,10 @@ class ProfileDTO(BaseModel):
     user_id: Optional[int]
     name: Optional[str] = ""
     avatar: Optional[str] = ""
+    # Unix epoch seconds; bumped by X-Career-User only when the avatar URL
+    # actually changes. Captured from the SQS UPSERT_MENTOR_PROFILE payload so
+    # the frontend can use it as a cache buster on the stable S3 URL.
+    avatar_updated_at: Optional[int] = None
     job_title: Optional[str] = ""
     company: Optional[str] = ""
     years_of_experience: Optional[str] = "0"
@@ -37,6 +41,7 @@ class ProfileVO(BaseModel):
     user_id: int
     name: Optional[str] = ""
     avatar: Optional[str] = ""
+    avatar_updated_at: Optional[int] = None
     job_title: Optional[str] = ""
     company: Optional[str] = ""
     years_of_experience: Optional[str] = "0"

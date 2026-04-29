@@ -45,6 +45,9 @@ app.add_middleware(
 async def startup_event():
     # ensure OpenSearch index exists with the correct mapping
     await _index_initializer.ensure_index("profiles", PROFILES_INDEX_MAPPING)
+    # Apply additive mapping changes (e.g. new fields like avatar_updated_at)
+    # to an existing index. No-op on a freshly-created index above.
+    await _index_initializer.sync_mapping("profiles", PROFILES_INDEX_MAPPING)
 
     # init global connection pool
     await _resource_manager.initial()

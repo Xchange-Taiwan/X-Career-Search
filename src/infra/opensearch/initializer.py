@@ -44,3 +44,44 @@ class IndexInitializer:
         except Exception as e:
             log.error("[IndexInitializer] failed to ensure index '%s': %s", index, e)
             return False
+
+    async def sync_mapping(self, index: str, mapping: Dict) -> bool:
+        """
+        Apply additive mapping changes (new properties) to an existing index.
+
+        OpenSearch's `PUT /<index>/_mapping` accepts new fields without recreating
+        the index, but rejects type changes on existing fields. We rely on that:
+        deploys that introduce a new field (e.g. `avatar_updated_at`) take effect
+        without manual ops; deploys that try to change an existing field's type
+        will surface as a logged error and a no-op rather than a silent drift.
+
+        Returns True when the mapping was applied (or no-op-acknowledged), False
+        on any unexpected failure.
+        """
+        try:
+            properties = mapping.get("mappings", {}).get("properties")
+            if not properties:
+                log.info(
+                    "[IndexInitializer] no properties to sync for index '%s'.", index
+                )
+                return True
+
+            response = self.opensearch.http_client.put(
+                f"/{index}/_mapping",
+                json={"properties": properties},
+            )
+            if response.status_code in (200, 201):
+                log.info(
+                    "[IndexInitializer] mapping for '%s' synced successfully.", index
+                )
+                return True
+
+            log.error(
+                "[IndexInitializer] unexpected response syncing mapping for '%s': status=%s body=%s",
+                index, response.status_code, response.json(),
+            )
+            return False
+
+        except Exception as e:
+            log.error("[IndexInitializer] failed to sync mapping for '%s': %s", index, e)
+            return False
