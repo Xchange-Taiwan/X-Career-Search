@@ -2,9 +2,6 @@ from ...domain.search.model.search_model import *
 
 
 def _add_user_tags_filter(query_body: Dict, kind: str, intent: str, subject_groups: List[str]):
-    # Reusable nested user_tags clause for the v2 query builder. Each nested
-    # query matches a row in `profiles_v2.user_tags` whose (kind, intent,
-    # subject_group) all line up.
     query_body["query"]["bool"]["must"].append({
         "nested": {
             "path": "user_tags",
@@ -22,11 +19,9 @@ def _add_user_tags_filter(query_body: Dict, kind: str, intent: str, subject_grou
 
 
 def format_search_mentors_query_v2(query: SearchMentorProfileDTO):
-    """v2 (#230-#232) query builder. Emits nested `user_tags` queries for
-    every per-kind filter (skills/topics/positions/expertises/offers) so the
-    Search service can target `profiles_v2`. v1 top-level fields like
-    `industry`, plus `search_pattern` and `cursor`, work the same on both
-    indices and are reused here."""
+    """Query builder targeting `profiles_v2`. Per-kind filters become nested
+    `user_tags` queries; top-level fields (industry, search_pattern, cursor)
+    behave the same as on v1."""
     query_body = {
         "query": {"bool": {"must": [], "filter": []}},
         "sort": [{"updated_at": "asc"}],
@@ -40,15 +35,11 @@ def format_search_mentors_query_v2(query: SearchMentorProfileDTO):
     if query.filter_positions:
         _add_user_tags_filter(query_body, "position", "WANT", query.filter_positions)
     if query.filter_expertises:
-        # Post-#226 kind-consolidation: mentor expertise lives on the same
-        # skill tree, distinguished by intent=OFFER. The legacy `expertise`
-        # kind was dropped from the User-service TagKind enum.
+        # Mentor expertise = skill tag with intent=OFFER.
         _add_user_tags_filter(query_body, "skill", "OFFER", query.filter_expertises)
 
     if query.filter_offers:
-        # `filter_offers` matches mentor offerings — intent=OFFER on either
-        # the skill or topic tree. Post-#226 kind consolidation, the legacy
-        # `what_i_offer` and `expertise` kinds no longer exist.
+        # Mentor offerings: intent=OFFER on either the skill or topic tree.
         query_body["query"]["bool"]["must"].append({
             "nested": {
                 "path": "user_tags",
@@ -157,10 +148,6 @@ def format_search_mentors_query(
                 "query": f"*{query.filter_industries}*"
             }
         })
-
-    # `filter_offers` is now v2-only; this v1 builder is unreachable for it
-    # (route forces v2 routing whenever filter_offers is set). Removed in this
-    # PR alongside the kind consolidation; the v2 builder is the sole owner.
 
     if query.search_pattern:
         query_body["query"]["bool"]["must"].append(

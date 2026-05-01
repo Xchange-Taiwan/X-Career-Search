@@ -44,10 +44,7 @@ app.add_middleware(
 
 @app.on_event("startup")
 async def startup_event():
-    # ensure OpenSearch indices exist with the correct mappings.
-    # v1 (`profiles`) is the live alias target; v2 (`profiles_v2`) is the new
-    # unified user_tags index added in #229. Both are populated in parallel
-    # until the v1→v2 alias swap in #233.
+    # ensure OpenSearch indices exist with the correct mappings
     await _index_initializer.ensure_index("profiles", PROFILES_INDEX_MAPPING)
     await _index_initializer.ensure_index("profiles_v2", PROFILES_V2_INDEX_MAPPING)
 

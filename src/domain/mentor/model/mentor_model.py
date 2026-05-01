@@ -23,9 +23,8 @@ class MentorProfileDTO(ProfileDTO):
     seniority_level: Optional[SeniorityLevel] = None
     expertises: Optional[List[str]] = None
     experiences: Optional[List[Dict]] = Field(default_factory=list)
-    # Unified user_tags array for the v2 index (#226 / #229). Each entry is
-    # {tag_id, kind, intent, subject_group, subject?, language?}. Absent on
-    # legacy SQS payloads — v1 doc is unaffected.
+    # Each entry: {tag_id, kind, intent, subject_group, subject?, language?}.
+    # Written to profiles_v2 only; v1 docs ignore this field.
     user_tags: Optional[List[Dict]] = None
     created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
     updated_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))

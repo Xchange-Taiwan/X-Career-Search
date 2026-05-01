@@ -74,8 +74,7 @@ class SearchService:
         response: ClientResponse = await self.opensearch.post(
             f"/profiles/_update/{user_id}", json=patch_body
         )
-        # Mirror the same patch into v2 — best-effort. Don't fail the SQS
-        # callback if v2 is missing the doc (alias swap in #233).
+        # Mirror into v2 best-effort; v2 may not yet have the doc.
         try:
             await self.opensearch.post(
                 f"/profiles_v2/_update/{user_id}", json=patch_body
@@ -92,27 +91,19 @@ class SearchService:
     # ── Core OpenSearch operations ────────────────────────────────────────────
 
     async def send_mentor(self, body: MentorProfileDTO):
-        """Upsert a full mentor profile document into v1 (`profiles`) and the
-        v2 unified-tag index (`profiles_v2`).
-
-        v1 doc shape is unchanged. v2 doc carries `user_tags` (when the SQS
-        payload includes them) instead of the per-kind nested arrays. Both
-        writes use `doc_as_upsert` so the doc is created on first message.
-        """
+        """Upsert a full mentor profile document into both `profiles` (v1) and
+        `profiles_v2`. v1 receives the legacy per-kind nested arrays; v2
+        receives `user_tags` instead."""
         user_id = body.user_id
         body.updated_at = datetime.now(timezone.utc)
         json_doc = body.to_json()
 
-        # v1 — strip user_tags, keep legacy nested fields
         v1_doc = {k: v for k, v in json_doc.items() if k != "user_tags"}
         v1_response: ClientResponse = await self.opensearch.post(
             f"/profiles/_update/{user_id}",
             json={"doc": v1_doc, "doc_as_upsert": True},
         )
 
-        # v2 — strip legacy per-kind nested arrays, keep user_tags. Once the
-        # User-side publisher emits user_tags in every SQS payload (planned
-        # follow-up), v2 docs become authoritative.
         v2_legacy_keys = {"interested_positions", "skills", "topics", "expertises"}
         v2_doc = {k: v for k, v in json_doc.items() if k not in v2_legacy_keys}
         try:
@@ -153,10 +144,8 @@ class SearchService:
         return {"mentors": mentors, "next_id": None}
 
     async def get_mentor(self, user_id: int):
-        # #226: read from profiles_v2 so callers see the new user_tags array
-        # (with parent_subject_group). v1 (`profiles`) still receives writes
-        # via dual-write for rollback safety, but is no longer the read path
-        # for single-mentor lookups.
+        # Reads target profiles_v2 so callers receive the user_tags array;
+        # writes still dual-write to profiles for rollback safety.
         response: ClientResponse = await self.opensearch.get(
             f"/profiles_v2/_doc/{user_id}", params={"pretty": "true"}
         )
