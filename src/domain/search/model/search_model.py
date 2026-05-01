@@ -19,6 +19,11 @@ class SearchMentorProfileDTO(BaseModel):
     filter_topics: Optional[List[str]]
     filter_expertises: Optional[List[str]]
     filter_industries: Optional[str]
+    # v2 (#229) — matches `user_tags` rows where intent=OFFER and
+    # subject_group is one of the supplied values. kind ∈ {what_i_offer,
+    # expertise} per the #226 design (#229 only mints what_i_offer; expertise
+    # arrives in #231).
+    filter_offers: Optional[List[str]] = None
     limit: int = PAGE_LIMIT
     cursor: Optional[datetime]
 
