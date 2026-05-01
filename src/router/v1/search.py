@@ -50,11 +50,24 @@ async def mentor_list(
         limit=limit,
         cursor=cursor
     )
-    query = format_search_mentors_query(search_query_dto)
-    # filter_offers is v2-only (nested user_tags query). When present, route
-    # the whole search to profiles_v2; otherwise stay on v1 — preserves
-    # existing v1 behavior for the rest of the filters.
-    index = "profiles_v2" if filter_offers else "profiles"
+    # #230-#232: every per-kind filter (skills/topics/positions/expertises/
+    # offers) targets `profiles_v2.user_tags`. When any is present, route
+    # the entire search to v2 with the v2 query builder. Default browse
+    # (no per-kind filters) stays on v1 — same behavior as before #229,
+    # avoids any change for unfiltered listings.
+    use_v2 = any([
+        filter_skills,
+        filter_topics,
+        filter_positions,
+        filter_expertises,
+        filter_offers,
+    ])
+    if use_v2:
+        query = format_search_mentors_query_v2(search_query_dto)
+        index = "profiles_v2"
+    else:
+        query = format_search_mentors_query(search_query_dto)
+        index = "profiles"
     res = await _search_service.get_mentor_list(query, index=index)
     return res_success(data=res, status_code=200)
 
