@@ -153,8 +153,12 @@ class SearchService:
         return {"mentors": mentors, "next_id": None}
 
     async def get_mentor(self, user_id: int):
+        # #226: read from profiles_v2 so callers see the new user_tags array
+        # (with parent_subject_group). v1 (`profiles`) still receives writes
+        # via dual-write for rollback safety, but is no longer the read path
+        # for single-mentor lookups.
         response: ClientResponse = await self.opensearch.get(
-            f"/profiles/_doc/{user_id}", params={"pretty": "true"}
+            f"/profiles_v2/_doc/{user_id}", params={"pretty": "true"}
         )
         data = response.res_json
         source = data.get("_source", {})

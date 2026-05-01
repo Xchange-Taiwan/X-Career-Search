@@ -40,11 +40,15 @@ def format_search_mentors_query_v2(query: SearchMentorProfileDTO):
     if query.filter_positions:
         _add_user_tags_filter(query_body, "position", "WANT", query.filter_positions)
     if query.filter_expertises:
-        _add_user_tags_filter(query_body, "expertise", "OFFER", query.filter_expertises)
+        # Post-#226 kind-consolidation: mentor expertise lives on the same
+        # skill tree, distinguished by intent=OFFER. The legacy `expertise`
+        # kind was dropped from the User-service TagKind enum.
+        _add_user_tags_filter(query_body, "skill", "OFFER", query.filter_expertises)
 
     if query.filter_offers:
-        # `filter_offers` spans kind ∈ {what_i_offer, expertise} per the #226
-        # design — both are OFFER intent, both are "things a mentor offers".
+        # `filter_offers` matches mentor offerings — intent=OFFER on either
+        # the skill or topic tree. Post-#226 kind consolidation, the legacy
+        # `what_i_offer` and `expertise` kinds no longer exist.
         query_body["query"]["bool"]["must"].append({
             "nested": {
                 "path": "user_tags",
@@ -55,7 +59,7 @@ def format_search_mentors_query_v2(query: SearchMentorProfileDTO):
                             {"terms": {"user_tags.subject_group": query.filter_offers}},
                         ],
                         "filter": [
-                            {"terms": {"user_tags.kind": ["what_i_offer", "expertise"]}}
+                            {"terms": {"user_tags.kind": ["skill", "topic"]}}
                         ],
                     }
                 },
@@ -154,26 +158,9 @@ def format_search_mentors_query(
             }
         })
 
-    # v2-only filter — matches user_tags(intent=OFFER, kind∈{what_i_offer,
-    # expertise}, subject_group∈[...]). Caller is expected to route the query
-    # to the `profiles_v2` index when this filter is set.
-    if query.filter_offers:
-        query_body["query"]["bool"]["must"].append({
-            "nested": {
-                "path": "user_tags",
-                "query": {
-                    "bool": {
-                        "must": [
-                            {"term": {"user_tags.intent": "OFFER"}},
-                            {"terms": {"user_tags.subject_group": query.filter_offers}},
-                        ],
-                        "filter": [
-                            {"terms": {"user_tags.kind": ["what_i_offer", "expertise"]}},
-                        ],
-                    }
-                },
-            }
-        })
+    # `filter_offers` is now v2-only; this v1 builder is unreachable for it
+    # (route forces v2 routing whenever filter_offers is set). Removed in this
+    # PR alongside the kind consolidation; the v2 builder is the sole owner.
 
     if query.search_pattern:
         query_body["query"]["bool"]["must"].append(
