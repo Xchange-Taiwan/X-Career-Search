@@ -50,11 +50,9 @@ async def mentor_list(
         limit=limit,
         cursor=cursor
     )
-    # #230-#232: every per-kind filter (skills/topics/positions/expertises/
-    # offers) targets `profiles_v2.user_tags`. When any is present, route
-    # the entire search to v2 with the v2 query builder. Default browse
-    # (no per-kind filters) stays on v1 — same behavior as before #229,
-    # avoids any change for unfiltered listings.
+    # Per-kind filters live on profiles_v2.user_tags, so any filtered query
+    # routes to v2. Unfiltered browse stays on v1 to avoid changing default
+    # listing behavior.
     use_v2 = any([
         filter_skills,
         filter_topics,

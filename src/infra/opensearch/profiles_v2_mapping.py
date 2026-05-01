@@ -11,13 +11,10 @@ _USER_TAG_NESTED_PROPS = {
         "fields": {"keyword": {"type": "keyword", "ignore_above": 256}},
     },
     "language": {"type": "keyword"},
-    # Free-form per-tag metadata (icon, display hints, etc.). Mirrors the v1
-    # `_INTEREST_NESTED_PROPS.desc` field, sourced from `Tag.desc` JSONB on
-    # the User service.
+    # Free-form per-tag metadata (icon, display hints, etc.).
     "desc": {"type": "object", "dynamic": True},
-    # Two-layer hierarchy (#226): NULL on top-level group rows, non-NULL on
-    # leaves. Indexed as keyword so search filters can target group-level
-    # buckets (e.g. "all skills under software_dev") if needed later.
+    # NULL on top-level group rows, non-NULL on leaves. Keyword so filters
+    # can target group-level buckets.
     "parent_subject_group": {"type": "keyword"},
 }
 
