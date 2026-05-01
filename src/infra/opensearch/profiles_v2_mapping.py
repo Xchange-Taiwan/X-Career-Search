@@ -11,6 +11,10 @@ _USER_TAG_NESTED_PROPS = {
         "fields": {"keyword": {"type": "keyword", "ignore_above": 256}},
     },
     "language": {"type": "keyword"},
+    # Free-form per-tag metadata (icon, display hints, etc.). Mirrors the v1
+    # `_INTEREST_NESTED_PROPS.desc` field, sourced from `Tag.desc` JSONB on
+    # the User service.
+    "desc": {"type": "object", "dynamic": True},
 }
 
 
