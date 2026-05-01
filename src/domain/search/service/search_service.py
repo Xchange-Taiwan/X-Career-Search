@@ -64,15 +64,24 @@ class SearchService:
         updated_at.  Does NOT touch any other profile fields."""
         user_id = event.get("user_id")
         experiences = event.get("experiences", [])
+        now_iso = datetime.now(timezone.utc).isoformat()
         patch_body = {
             "doc": {
                 "experiences": experiences,
-                "updated_at": datetime.now(timezone.utc).isoformat(),
+                "updated_at": now_iso,
             }
         }
         response: ClientResponse = await self.opensearch.post(
             f"/profiles/_update/{user_id}", json=patch_body
         )
+        # Mirror the same patch into v2 — best-effort. Don't fail the SQS
+        # callback if v2 is missing the doc (alias swap in #233).
+        try:
+            await self.opensearch.post(
+                f"/profiles_v2/_update/{user_id}", json=patch_body
+            )
+        except Exception as e:
+            log.warning("[SearchService] v2 patch failed for user %s: %s", user_id, e)
         return response.res_json
 
     async def _delete_mentor_by_event(self, event: Dict):
@@ -83,30 +92,54 @@ class SearchService:
     # ── Core OpenSearch operations ────────────────────────────────────────────
 
     async def send_mentor(self, body: MentorProfileDTO):
-        """Upsert a full mentor profile document (create if absent, merge if present)."""
+        """Upsert a full mentor profile document into v1 (`profiles`) and the
+        v2 unified-tag index (`profiles_v2`).
+
+        v1 doc shape is unchanged. v2 doc carries `user_tags` (when the SQS
+        payload includes them) instead of the per-kind nested arrays. Both
+        writes use `doc_as_upsert` so the doc is created on first message.
+        """
         user_id = body.user_id
         body.updated_at = datetime.now(timezone.utc)
         json_doc = body.to_json()
-        upsert_body = {
-            "doc": json_doc,
-            "doc_as_upsert": True,
-        }
-        response: ClientResponse = await self.opensearch.post(
-            f"/profiles/_update/{user_id}", json=upsert_body
+
+        # v1 — strip user_tags, keep legacy nested fields
+        v1_doc = {k: v for k, v in json_doc.items() if k != "user_tags"}
+        v1_response: ClientResponse = await self.opensearch.post(
+            f"/profiles/_update/{user_id}",
+            json={"doc": v1_doc, "doc_as_upsert": True},
         )
-        return response.res_json
+
+        # v2 — strip legacy per-kind nested arrays, keep user_tags. Once the
+        # User-side publisher emits user_tags in every SQS payload (planned
+        # follow-up), v2 docs become authoritative.
+        v2_legacy_keys = {"interested_positions", "skills", "topics", "expertises"}
+        v2_doc = {k: v for k, v in json_doc.items() if k not in v2_legacy_keys}
+        try:
+            await self.opensearch.post(
+                f"/profiles_v2/_update/{user_id}",
+                json={"doc": v2_doc, "doc_as_upsert": True},
+            )
+        except Exception as e:
+            log.warning("[SearchService] v2 upsert failed for user %s: %s", user_id, e)
+
+        return v1_response.res_json
 
     async def delete_mentor(self, user_id: int):
         response: ClientResponse = await self.opensearch.delete(
             f"/profiles/_doc/{user_id}"
         )
+        try:
+            await self.opensearch.delete(f"/profiles_v2/_doc/{user_id}")
+        except Exception as e:
+            log.warning("[SearchService] v2 delete failed for user %s: %s", user_id, e)
         return response.res_json
 
-    async def get_mentor_list(self, query: SearchMentorProfileDTO):
+    async def get_mentor_list(self, query: SearchMentorProfileDTO, index: str = "profiles"):
         if query is None:
             raise ClientException(msg="Query could not be None")
         response: ClientResponse = await self.opensearch.post(
-            f"/profiles/_search",
+            f"/{index}/_search",
             params={"request_cache": "true", "pretty": "true"},
             json=query,
         )

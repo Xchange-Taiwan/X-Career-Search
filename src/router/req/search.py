@@ -62,6 +62,27 @@ def format_search_mentors_query(
             }
         })
 
+    # v2-only filter — matches user_tags(intent=OFFER, kind∈{what_i_offer,
+    # expertise}, subject_group∈[...]). Caller is expected to route the query
+    # to the `profiles_v2` index when this filter is set.
+    if query.filter_offers:
+        query_body["query"]["bool"]["must"].append({
+            "nested": {
+                "path": "user_tags",
+                "query": {
+                    "bool": {
+                        "must": [
+                            {"term": {"user_tags.intent": "OFFER"}},
+                            {"terms": {"user_tags.subject_group": query.filter_offers}},
+                        ],
+                        "filter": [
+                            {"terms": {"user_tags.kind": ["what_i_offer", "expertise"]}},
+                        ],
+                    }
+                },
+            }
+        })
+
     if query.search_pattern:
         query_body["query"]["bool"]["must"].append(
             {"query_string": {"query": f"*{query.search_pattern}*"}}

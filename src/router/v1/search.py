@@ -35,6 +35,7 @@ async def mentor_list(
     filter_topics: List[str] = Query(None),
     filter_expertises: List[str] = Query(None),
     filter_industries: str = Query(None),
+    filter_offers: List[str] = Query(None),
     limit: int = Query(PAGE_LIMIT),
     cursor: datetime = Query(None),
 ):
@@ -45,11 +46,16 @@ async def mentor_list(
         filter_topics=filter_topics,
         filter_expertises=filter_expertises,
         filter_industries=filter_industries,
+        filter_offers=filter_offers,
         limit=limit,
         cursor=cursor
     )
     query = format_search_mentors_query(search_query_dto)
-    res = await _search_service.get_mentor_list(query)
+    # filter_offers is v2-only (nested user_tags query). When present, route
+    # the whole search to profiles_v2; otherwise stay on v1 — preserves
+    # existing v1 behavior for the rest of the filters.
+    index = "profiles_v2" if filter_offers else "profiles"
+    res = await _search_service.get_mentor_list(query, index=index)
     return res_success(data=res, status_code=200)
 
 
