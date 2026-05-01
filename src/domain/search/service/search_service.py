@@ -74,13 +74,6 @@ class SearchService:
         response: ClientResponse = await self.opensearch.post(
             f"/profiles/_update/{user_id}", json=patch_body
         )
-        # Mirror into v2 best-effort; v2 may not yet have the doc.
-        try:
-            await self.opensearch.post(
-                f"/profiles_v2/_update/{user_id}", json=patch_body
-            )
-        except Exception as e:
-            log.warning("[SearchService] v2 patch failed for user %s: %s", user_id, e)
         return response.res_json
 
     async def _delete_mentor_by_event(self, event: Dict):
@@ -91,46 +84,28 @@ class SearchService:
     # ── Core OpenSearch operations ────────────────────────────────────────────
 
     async def send_mentor(self, body: MentorProfileDTO):
-        """Upsert a full mentor profile document into both `profiles` (v1) and
-        `profiles_v2`. v1 receives the legacy per-kind nested arrays; v2
-        receives `user_tags` instead."""
+        """Upsert a full mentor profile document into the `profiles` index."""
         user_id = body.user_id
         body.updated_at = datetime.now(timezone.utc)
-        json_doc = body.to_json()
+        doc = body.to_json()
 
-        v1_doc = {k: v for k, v in json_doc.items() if k != "user_tags"}
-        v1_response: ClientResponse = await self.opensearch.post(
+        response: ClientResponse = await self.opensearch.post(
             f"/profiles/_update/{user_id}",
-            json={"doc": v1_doc, "doc_as_upsert": True},
+            json={"doc": doc, "doc_as_upsert": True},
         )
-
-        v2_legacy_keys = {"interested_positions", "skills", "topics", "expertises"}
-        v2_doc = {k: v for k, v in json_doc.items() if k not in v2_legacy_keys}
-        try:
-            await self.opensearch.post(
-                f"/profiles_v2/_update/{user_id}",
-                json={"doc": v2_doc, "doc_as_upsert": True},
-            )
-        except Exception as e:
-            log.warning("[SearchService] v2 upsert failed for user %s: %s", user_id, e)
-
-        return v1_response.res_json
+        return response.res_json
 
     async def delete_mentor(self, user_id: int):
         response: ClientResponse = await self.opensearch.delete(
             f"/profiles/_doc/{user_id}"
         )
-        try:
-            await self.opensearch.delete(f"/profiles_v2/_doc/{user_id}")
-        except Exception as e:
-            log.warning("[SearchService] v2 delete failed for user %s: %s", user_id, e)
         return response.res_json
 
-    async def get_mentor_list(self, query: SearchMentorProfileDTO, index: str = "profiles"):
+    async def get_mentor_list(self, query: SearchMentorProfileDTO):
         if query is None:
             raise ClientException(msg="Query could not be None")
         response: ClientResponse = await self.opensearch.post(
-            f"/{index}/_search",
+            "/profiles/_search",
             params={"request_cache": "true", "pretty": "true"},
             json=query,
         )
@@ -144,10 +119,8 @@ class SearchService:
         return {"mentors": mentors, "next_id": None}
 
     async def get_mentor(self, user_id: int):
-        # Reads target profiles_v2 so callers receive the user_tags array;
-        # writes still dual-write to profiles for rollback safety.
         response: ClientResponse = await self.opensearch.get(
-            f"/profiles_v2/_doc/{user_id}", params={"pretty": "true"}
+            f"/profiles/_doc/{user_id}", params={"pretty": "true"}
         )
         data = response.res_json
         source = data.get("_source", {})

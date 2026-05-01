@@ -24,7 +24,6 @@ class MentorProfileDTO(ProfileDTO):
     expertises: Optional[List[str]] = None
     experiences: Optional[List[Dict]] = Field(default_factory=list)
     # Each entry: {tag_id, kind, intent, subject_group, subject?, language?}.
-    # Written to profiles_v2 only; v1 docs ignore this field.
     user_tags: Optional[List[Dict]] = None
     created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
     updated_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))

@@ -7,7 +7,6 @@ from src.infra.mq.sqs_mq_adapter import SqsMqAdapter
 from src.infra.api.opensearch import OpenSearch
 from src.infra.opensearch.initializer import IndexInitializer
 from src.infra.opensearch.mapping import PROFILES_INDEX_MAPPING
-from src.infra.opensearch.profiles_v2_mapping import PROFILES_V2_INDEX_MAPPING
 from src.domain.search.service.search_service import SearchService
 from src.config.conf import SQS_QUEUE_URL, SQS_DEAD_LETTER_QUEUE_URL
 

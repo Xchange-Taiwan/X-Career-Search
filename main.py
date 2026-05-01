@@ -25,7 +25,6 @@ from src.app._di.injection import (
     _search_service,
     _index_initializer,
     PROFILES_INDEX_MAPPING,
-    PROFILES_V2_INDEX_MAPPING,
 )
 from src.config import exception
 
@@ -44,9 +43,8 @@ app.add_middleware(
 
 @app.on_event("startup")
 async def startup_event():
-    # ensure OpenSearch indices exist with the correct mappings
+    # ensure OpenSearch index exists with the correct mapping
     await _index_initializer.ensure_index("profiles", PROFILES_INDEX_MAPPING)
-    await _index_initializer.ensure_index("profiles_v2", PROFILES_V2_INDEX_MAPPING)
 
     # init global connection pool
     await _resource_manager.initial()

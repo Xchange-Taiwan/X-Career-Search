@@ -50,23 +50,8 @@ async def mentor_list(
         limit=limit,
         cursor=cursor
     )
-    # Per-kind filters live on profiles_v2.user_tags, so any filtered query
-    # routes to v2. Unfiltered browse stays on v1 to avoid changing default
-    # listing behavior.
-    use_v2 = any([
-        filter_skills,
-        filter_topics,
-        filter_positions,
-        filter_expertises,
-        filter_offers,
-    ])
-    if use_v2:
-        query = format_search_mentors_query_v2(search_query_dto)
-        index = "profiles_v2"
-    else:
-        query = format_search_mentors_query(search_query_dto)
-        index = "profiles"
-    res = await _search_service.get_mentor_list(query, index=index)
+    query = format_search_mentors_query(search_query_dto)
+    res = await _search_service.get_mentor_list(query)
     return res_success(data=res, status_code=200)
 
 
