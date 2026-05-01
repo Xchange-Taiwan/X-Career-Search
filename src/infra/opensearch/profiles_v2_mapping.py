@@ -15,6 +15,10 @@ _USER_TAG_NESTED_PROPS = {
     # `_INTEREST_NESTED_PROPS.desc` field, sourced from `Tag.desc` JSONB on
     # the User service.
     "desc": {"type": "object", "dynamic": True},
+    # Two-layer hierarchy (#226): NULL on top-level group rows, non-NULL on
+    # leaves. Indexed as keyword so search filters can target group-level
+    # buckets (e.g. "all skills under software_dev") if needed later.
+    "parent_subject_group": {"type": "keyword"},
 }
 
 
