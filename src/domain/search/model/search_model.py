@@ -19,6 +19,7 @@ class SearchMentorProfileDTO(BaseModel):
     filter_topics: Optional[List[str]]
     filter_expertises: Optional[List[str]]
     filter_industries: Optional[str]
+    filter_offers: Optional[List[str]] = None
     limit: int = PAGE_LIMIT
     cursor: Optional[datetime]
 
