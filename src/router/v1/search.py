@@ -35,6 +35,7 @@ async def mentor_list(
     filter_topics: List[str] = Query(None),
     filter_expertises: List[str] = Query(None),
     filter_industries: str = Query(None),
+    filter_offers: List[str] = Query(None),
     limit: int = Query(PAGE_LIMIT),
     cursor: datetime = Query(None),
 ):
@@ -45,6 +46,7 @@ async def mentor_list(
         filter_topics=filter_topics,
         filter_expertises=filter_expertises,
         filter_industries=filter_industries,
+        filter_offers=filter_offers,
         limit=limit,
         cursor=cursor
     )
