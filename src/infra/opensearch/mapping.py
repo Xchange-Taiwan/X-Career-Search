@@ -1,21 +1,16 @@
 from typing import Dict
 
 
-_USER_TAG_NESTED_PROPS = {
-    "tag_id": {"type": "long"},
-    "kind": {"type": "keyword"},
-    "intent": {"type": "keyword"},
-    "subject_group": {"type": "keyword"},
-    "subject": {
-        "type": "text",
-        "fields": {"keyword": {"type": "keyword", "ignore_above": 256}},
-    },
-    "language": {"type": "keyword"},
-    "desc": {"type": "object", "dynamic": True},
-    # NULL on top-level group rows, non-NULL on leaves. Keyword so filters
-    # can target group-level buckets.
-    "parent_subject_group": {"type": "keyword"},
-}
+# Five flat keyword[] arrays mirror the buckets exposed on
+# MentorProfileVO/DTO at the User service. Filters are simple `terms`
+# matches on the canonical subject_group key — no nesting needed.
+_BUCKET_FIELDS = (
+    "want_position",
+    "want_skill",
+    "want_topic",
+    "have_skill",
+    "have_topic",
+)
 
 
 PROFILES_INDEX_MAPPING: Dict = {
@@ -52,10 +47,7 @@ PROFILES_INDEX_MAPPING: Dict = {
             "created_at": {"type": "date"},
             "updated_at": {"type": "date"},
 
-            "user_tags": {
-                "type": "nested",
-                "properties": _USER_TAG_NESTED_PROPS,
-            },
+            **{field: {"type": "keyword"} for field in _BUCKET_FIELDS},
 
             "experiences": {
                 "type": "nested",

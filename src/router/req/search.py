@@ -1,26 +1,9 @@
 from ...domain.search.model.search_model import *
 
 
-def _add_user_tags_filter(query_body: Dict, kind: str, intent: str, subject_groups: List[str]):
-    query_body["query"]["bool"]["must"].append({
-        "nested": {
-            "path": "user_tags",
-            "query": {
-                "bool": {
-                    "must": [
-                        {"term": {"user_tags.kind": kind}},
-                        {"term": {"user_tags.intent": intent}},
-                        {"terms": {"user_tags.subject_group": subject_groups}},
-                    ]
-                }
-            },
-        }
-    })
-
-
 def format_search_mentors_query(query: SearchMentorProfileDTO):
-    """Per-kind filters become nested `user_tags` queries; top-level fields
-    (industry, search_pattern, cursor) stay on the root document."""
+    """Per-bucket filters land on the matching keyword[] field on the root
+    document; industry / search_pattern / cursor stay where they were."""
     query_body = {
         "query": {"bool": {"must": [], "filter": []}},
         "sort": [{"updated_at": "asc"}],
@@ -28,31 +11,32 @@ def format_search_mentors_query(query: SearchMentorProfileDTO):
     }
 
     if query.filter_skills:
-        _add_user_tags_filter(query_body, "skill", "WANT", query.filter_skills)
+        query_body["query"]["bool"]["must"].append(
+            {"terms": {"want_skill": query.filter_skills}}
+        )
     if query.filter_topics:
-        _add_user_tags_filter(query_body, "topic", "WANT", query.filter_topics)
+        query_body["query"]["bool"]["must"].append(
+            {"terms": {"want_topic": query.filter_topics}}
+        )
     if query.filter_positions:
-        _add_user_tags_filter(query_body, "position", "WANT", query.filter_positions)
+        query_body["query"]["bool"]["must"].append(
+            {"terms": {"want_position": query.filter_positions}}
+        )
     if query.filter_expertises:
-        # Mentor expertise = skill tag with intent=OFFER.
-        _add_user_tags_filter(query_body, "skill", "OFFER", query.filter_expertises)
+        # Mentor expertise = HAVE-side skill bucket.
+        query_body["query"]["bool"]["must"].append(
+            {"terms": {"have_skill": query.filter_expertises}}
+        )
 
     if query.filter_offers:
-        # Mentor offerings: intent=OFFER on either the skill or topic tree.
+        # "What I offer" spans both HAVE buckets — match either.
         query_body["query"]["bool"]["must"].append({
-            "nested": {
-                "path": "user_tags",
-                "query": {
-                    "bool": {
-                        "must": [
-                            {"term": {"user_tags.intent": "OFFER"}},
-                            {"terms": {"user_tags.subject_group": query.filter_offers}},
-                        ],
-                        "filter": [
-                            {"terms": {"user_tags.kind": ["skill", "topic"]}}
-                        ],
-                    }
-                },
+            "bool": {
+                "should": [
+                    {"terms": {"have_skill": query.filter_offers}},
+                    {"terms": {"have_topic": query.filter_offers}},
+                ],
+                "minimum_should_match": 1,
             }
         })
 

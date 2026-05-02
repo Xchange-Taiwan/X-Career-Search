@@ -23,8 +23,15 @@ class MentorProfileDTO(ProfileDTO):
     seniority_level: Optional[SeniorityLevel] = None
     expertises: Optional[List[str]] = None
     experiences: Optional[List[Dict]] = Field(default_factory=list)
-    # Each entry: {tag_id, kind, intent, subject_group, subject?, language?}.
-    user_tags: Optional[List[Dict]] = None
+
+    # Five flat subject_group arrays from the User-service SQS payload —
+    # each maps 1:1 to a keyword[] field in the OpenSearch mapping.
+    want_position: Optional[List[str]] = None
+    want_skill: Optional[List[str]] = None
+    want_topic: Optional[List[str]] = None
+    have_skill: Optional[List[str]] = None
+    have_topic: Optional[List[str]] = None
+
     created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
     updated_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
     # SQS routing field – consumed by the Search service command registry;
