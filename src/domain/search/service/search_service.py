@@ -64,11 +64,10 @@ class SearchService:
         updated_at.  Does NOT touch any other profile fields."""
         user_id = event.get("user_id")
         experiences = event.get("experiences", [])
-        now_iso = datetime.now(timezone.utc).isoformat()
         patch_body = {
             "doc": {
                 "experiences": experiences,
-                "updated_at": now_iso,
+                "updated_at": datetime.now(timezone.utc).isoformat(),
             }
         }
         response: ClientResponse = await self.opensearch.post(
@@ -84,14 +83,16 @@ class SearchService:
     # ── Core OpenSearch operations ────────────────────────────────────────────
 
     async def send_mentor(self, body: MentorProfileDTO):
-        """Upsert a full mentor profile document into the `profiles` index."""
+        """Upsert a full mentor profile document (create if absent, merge if present)."""
         user_id = body.user_id
         body.updated_at = datetime.now(timezone.utc)
-        doc = body.to_json()
-
+        json_doc = body.to_json()
+        upsert_body = {
+            "doc": json_doc,
+            "doc_as_upsert": True,
+        }
         response: ClientResponse = await self.opensearch.post(
-            f"/profiles/_update/{user_id}",
-            json={"doc": doc, "doc_as_upsert": True},
+            f"/profiles/_update/{user_id}", json=upsert_body
         )
         return response.res_json
 
@@ -105,7 +106,7 @@ class SearchService:
         if query is None:
             raise ClientException(msg="Query could not be None")
         response: ClientResponse = await self.opensearch.post(
-            "/profiles/_search",
+            f"/profiles/_search",
             params={"request_cache": "true", "pretty": "true"},
             json=query,
         )

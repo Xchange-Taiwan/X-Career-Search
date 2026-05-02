@@ -1,17 +1,16 @@
 from typing import Dict
 
-
-# Five flat keyword[] arrays mirror the buckets exposed on
-# MentorProfileVO/DTO at the User service. Filters are simple `terms`
-# matches on the canonical subject_group key — no nesting needed.
-_BUCKET_FIELDS = (
-    "want_position",
-    "want_skill",
-    "want_topic",
-    "have_skill",
-    "have_topic",
-)
-
+_INTEREST_NESTED_PROPS = {
+    "id": {"type": "integer"},
+    "subject": {
+        "type": "text",
+        "fields": {"keyword": {"type": "keyword", "ignore_above": 256}},
+    },
+    "subject_group": {"type": "keyword"},
+    "category": {"type": "keyword"},
+    "language": {"type": "keyword"},
+    "desc": {"type": "object", "dynamic": True},
+}
 
 PROFILES_INDEX_MAPPING: Dict = {
     "settings": {
@@ -20,6 +19,7 @@ PROFILES_INDEX_MAPPING: Dict = {
     },
     "mappings": {
         "properties": {
+            # ── base profile ────────────────────────────────────────────
             "user_id": {"type": "long"},
             "name": {
                 "type": "text",
@@ -40,20 +40,53 @@ PROFILES_INDEX_MAPPING: Dict = {
             "language": {"type": "keyword"},
             "is_mentor": {"type": "boolean"},
 
+            # ── mentor-specific ─────────────────────────────────────────
             "personal_statement": {"type": "text"},
             "about": {"type": "text"},
             "seniority_level": {"type": "keyword"},
 
+            # ── timestamps ──────────────────────────────────────────────
             "created_at": {"type": "date"},
             "updated_at": {"type": "date"},
 
-            **{field: {"type": "keyword"} for field in _BUCKET_FIELDS},
+            # ── nested: interests ────────────────────────────────────────
+            "interested_positions": {
+                "type": "nested",
+                "properties": _INTEREST_NESTED_PROPS,
+            },
+            "skills": {
+                "type": "nested",
+                "properties": _INTEREST_NESTED_PROPS,
+            },
+            "topics": {
+                "type": "nested",
+                "properties": _INTEREST_NESTED_PROPS,
+            },
 
+            # ── nested: expertises (professions) ─────────────────────────
+            "expertises": {
+                "type": "nested",
+                "properties": {
+                    "id": {"type": "integer"},
+                    "subject": {
+                        "type": "text",
+                        "fields": {"keyword": {"type": "keyword", "ignore_above": 256}},
+                    },
+                    "subject_group": {"type": "keyword"},
+                    "category": {"type": "keyword"},
+                    "language": {"type": "keyword"},
+                    "profession_metadata": {"type": "object", "dynamic": True},
+                },
+            },
+
+            # ── nested: mentor_experiences ────────────────────────────────
+            # Declared as `nested` (not `object`) so each experience item can be
+            # queried independently (e.g. filter by category + metadata together).
             "experiences": {
                 "type": "nested",
                 "properties": {
                     "id": {"type": "integer"},
-                    "category": {"type": "keyword"},
+                    "category": {"type": "keyword"},  # WORK / EDUCATION / LINK
                     "order": {"type": "integer"},
                     "mentor_experiences_metadata": {"type": "object", "dynamic": True},
                 },
