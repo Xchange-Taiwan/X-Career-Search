@@ -1,7 +1,7 @@
 import asyncio
 import aioboto3
 from typing import Dict
-from .handler import *
+from .handler import ResourceHandler
 from src.config.conf import (
     PROBE_CYCLE_SECS,
 )
