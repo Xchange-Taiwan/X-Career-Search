@@ -54,8 +54,8 @@ class SearchService:
 
     async def _put_mentor(self, event: Dict):
         """Update mentor-specific fields (personal_statement, about, seniority_level,
-        expertises).  Uses the same _update + doc_as_upsert path so OpenSearch merges
-        only the supplied fields."""
+        tag buckets).  Uses the same _update + doc_as_upsert path so OpenSearch
+        merges only the supplied fields."""
         body = MentorProfileDTO(**event)
         await self.send_mentor(body)
 

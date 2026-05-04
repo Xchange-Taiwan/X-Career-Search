@@ -1,9 +1,9 @@
 import logging
-from typing import List, Optional
+from typing import Optional
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel
 
-from .common_model import ProfessionVO, InterestListVO
+from .common_model import ProfessionVO
 from ....config.conf import DEFAULT_LANGUAGE
 
 log = logging.getLogger(__name__)
@@ -19,9 +19,6 @@ class ProfileDTO(BaseModel):
     company: Optional[str] = ""
     years_of_experience: Optional[str] = "0"
     location: Optional[str] = ""
-    interested_positions: Optional[List[str]] = Field(default_factory=list)
-    skills: Optional[List[str]] = Field(default_factory=list)
-    topics: Optional[List[str]] = Field(default_factory=list)
     industry: Optional[str] = ""
     language: Optional[str] = DEFAULT_LANGUAGE
     is_mentor: Optional[bool] = False
@@ -41,9 +38,6 @@ class ProfileVO(BaseModel):
     company: Optional[str] = ""
     years_of_experience: Optional[str] = "0"
     location: Optional[str] = ""
-    interested_positions: Optional[InterestListVO] = None
-    skills: Optional[InterestListVO] = None
-    topics: Optional[InterestListVO] = None
     industry: Optional[ProfessionVO] = None
     onboarding: Optional[bool] = False
     is_mentor: Optional[bool] = False
