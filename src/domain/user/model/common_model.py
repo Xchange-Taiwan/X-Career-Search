@@ -1,24 +1,9 @@
-import json
-from typing import Any, Dict, List, Optional, Union
+from typing import Dict, List, Optional
 from pydantic import BaseModel
 from ....config.constant import *
 import logging
 
 log = logging.getLogger(__name__)
-
-
-class InterestVO(BaseModel):
-    id: int
-    category: InterestCategory = None
-    language: Optional[str] = None
-    subject_group: str = "unknown"
-    subject: Optional[str] = ""
-    desc: Optional[Dict] = {}
-
-
-class InterestListVO(BaseModel):
-    interests: List[InterestVO] = []
-    language: Optional[str] = None
 
 
 class ProfessionDTO(BaseModel):
