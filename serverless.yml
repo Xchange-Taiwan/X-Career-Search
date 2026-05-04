@@ -27,14 +27,14 @@ provider:
         - logs:PutLogEvents
         Resource:
         - arn:aws:logs:${env:THE_REGION}:${env:ACCOUNT_ID}:log-group:/aws/lambda/${self:service}-${self:provider.stage}-app:*
-      # - Effect: "Allow"
-      #   Action:
-      #   - "es:ESHttpGet"
-      #   - "es:ESHttpPut"
-      #   - "es:ESHttpPost"
-      #   - "es:ESHttpDelete"
-      #   Resource:
-      #   - arn:aws:es:${env:THE_REGION}:${env:ACCOUNT_ID}:domain/*
+      - Effect: Allow
+        Action:
+        - sqs:ReceiveMessage
+        - sqs:DeleteMessage
+        - sqs:GetQueueAttributes
+        - sqs:ChangeMessageVisibility
+        Resource:
+        - arn:aws:sqs:${env:THE_REGION}:${env:ACCOUNT_ID}:X_CAREER_USER_DUPLICATE_QUEUE.fifo
 
 custom:
   pythonRequirements:
@@ -65,7 +65,7 @@ functions:
       - "!**/__pycache__/**"
 
     handler: main.handler
-    timeout: 30
+    timeout: 60
     environment:
       STAGE: ${self:provider.stage}
     layers:
@@ -78,5 +78,9 @@ functions:
           origin: '*'
           headers: '*'
           allowCredentials: false
+    - sqs:
+        arn: arn:aws:sqs:${env:THE_REGION}:${env:ACCOUNT_ID}:X_CAREER_USER_DUPLICATE_QUEUE.fifo
+        batchSize: 10
+        functionResponseType: ReportBatchItemFailures
 plugins:
   - serverless-python-requirements
