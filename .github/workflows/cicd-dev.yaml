@@ -1,0 +1,84 @@
+# dev 分支推送時部署至 AWS Lambda（Serverless Framework）
+# 部署後的 Lambda 環境變數對齊 dev-env-deploy.sh（敏感值放 Repository secrets；DEFAULT_LANGUAGE 用 Variables）
+name: X-Career-Search Pipeline
+
+on:
+  push:
+    branches:
+      - dev
+
+jobs:
+  deploy:
+    if: github.ref == 'refs/heads/dev'
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Set up Python 3.9
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.9"
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: "18"
+
+      - name: Install Node dependencies (Serverless)
+        run: npm install
+
+      - name: Install Python dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v2
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID_DEV }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY_DEV }}
+          aws-region: ${{ secrets.AWS_REGION }}
+
+      - name: Deploy to AWS Lambda
+        run: npx sls deploy --stage dev --region ${{ secrets.AWS_REGION }}
+        env:
+          STAGE: dev
+          THE_REGION: ${{ secrets.AWS_REGION }}
+          ACCOUNT_ID: ${{ secrets.AWS_ACCOUNT_ID }}
+
+      - name: Update Lambda environment variables
+        env:
+          DEFAULT_LANGUAGE: ${{ vars.DEFAULT_LANGUAGE }}
+          OPENSERACH_DOMAIN_ENDPOINT: ${{ secrets.OPENSERACH_DOMAIN_ENDPOINT_DEV }}
+          OPENSERACH_USERNAME: ${{ secrets.OPENSERACH_USERNAME_DEV }}
+          OPENSERACH_PASSWORD: ${{ secrets.OPENSERACH_PASSWORD_DEV }}
+          PAGE_LIMIT: ${{ vars.PAGE_LIMIT }}
+        run: |
+          DEFAULT_LANGUAGE="${DEFAULT_LANGUAGE:-zh_TW}"
+          TESTING="${TESTING:-dev}"
+          PAGE_LIMIT="${PAGE_LIMIT:-9}"
+          jq -n \
+            --arg DEFAULT_LANGUAGE "$DEFAULT_LANGUAGE" \
+            --arg STAGE "dev" \
+            --arg TESTING "dev" \
+            --arg OPENSERACH_DOMAIN_ENDPOINT "$OPENSERACH_DOMAIN_ENDPOINT" \
+            --arg OPENSERACH_USERNAME "$OPENSERACH_USERNAME" \
+            --arg OPENSERACH_PASSWORD "$OPENSERACH_PASSWORD" \
+            --arg PAGE_LIMIT "$PAGE_LIMIT" \
+            '{
+              FunctionName: "x-career-search-dev-app",
+              Environment: {
+                Variables: {
+                  DEFAULT_LANGUAGE: $DEFAULT_LANGUAGE,
+                  STAGE: $STAGE,
+                  TESTING: $TESTING,
+                  OPENSERACH_DOMAIN_ENDPOINT: $OPENSERACH_DOMAIN_ENDPOINT,
+                  OPENSERACH_USERNAME: $OPENSERACH_USERNAME,
+                  OPENSERACH_PASSWORD: $OPENSERACH_PASSWORD,
+                  PAGE_LIMIT: $PAGE_LIMIT
+                }
+              }
+            }' > /tmp/search-lambda-update.json
+          aws lambda update-function-configuration --cli-input-json file:///tmp/search-lambda-update.json

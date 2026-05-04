@@ -65,7 +65,7 @@ def format_search_mentors_query(query: SearchMentorProfileDTO):
         query_body = {
             "query": {"bool": {"must": []}},
             "sort": [{"updated_at": "asc"}],
-            "size": query.limit or 9,
+            "size": query.limit or PAGE_LIMIT,
         }
 
     return query_body

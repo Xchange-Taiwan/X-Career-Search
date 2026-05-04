@@ -2,6 +2,7 @@ from src.config.logging_config import init_logging
 log = init_logging()
 
 import os
+import json
 import asyncio
 from mangum import Mangum
 from fastapi import (
@@ -20,8 +21,6 @@ from fastapi.middleware.cors import CORSMiddleware
 from src.router.v1 import search, search_internal
 from src.app._di.injection import (
     _resource_manager,
-    _queue_adapter,
-    _dlq_adapter,
     _search_service,
     _index_initializer,
     PROFILES_INDEX_MAPPING,
@@ -50,19 +49,6 @@ async def startup_event():
     await _resource_manager.initial()
     asyncio.create_task(_resource_manager.keeping_probe())
 
-    # subscribe messages(SQS)
-    asyncio.create_task(
-        _queue_adapter.subscribe_messages(
-            _search_service.subscribe_mentor_update,
-        )
-    )
-    # subscribe DLQ messages(SQS)
-    asyncio.create_task(
-        _dlq_adapter.subscribe_messages(
-            _search_service.subscribe_mentor_update,
-        )
-    )
-
 
 @app.on_event("shutdown")
 async def shutdown_event():
@@ -87,5 +73,37 @@ async def info(term: str):
     return JSONResponse(content={"mention": "You only live once."})
 
 
-# Mangum Handler, this is so important
-handler = Mangum(app)
+_mangum = Mangum(app)
+
+
+def handler(event, context):
+    # SQS event source delivers a batch of records; route to the SQS handler
+    # so we can ack successes and report partial failures back to Lambda.
+    if (
+        isinstance(event, dict)
+        and isinstance(event.get("Records"), list)
+        and event["Records"]
+        and all(r.get("eventSource") == "aws:sqs" for r in event["Records"])
+    ):
+        return _handle_sqs_event(event)
+    return _mangum(event, context)
+
+
+def _handle_sqs_event(event):
+    failures = []
+
+    async def _process_all():
+        for record in event["Records"]:
+            try:
+                body = json.loads(record["body"])
+                await _search_service.subscribe_mentor_update(body)
+            except Exception as e:
+                log.error(
+                    "[SQS] failed to process messageId=%s: %s",
+                    record.get("messageId"),
+                    e,
+                )
+                failures.append({"itemIdentifier": record["messageId"]})
+
+    asyncio.run(_process_all())
+    return {"batchItemFailures": failures}
