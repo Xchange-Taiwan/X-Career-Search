@@ -8,7 +8,6 @@ from fastapi.encoders import jsonable_encoder
 from pydantic import BaseModel, Field
 
 from .experience_model import ExperienceVO
-from ...user.model.common_model import ProfessionListVO
 from ...user.model.user_model import ProfileDTO, ProfileVO
 from ....config.constant import SeniorityLevel, MentorAction
 
@@ -21,7 +20,6 @@ class MentorProfileDTO(ProfileDTO):
     personal_statement: Optional[str] = None
     about: Optional[str] = None
     seniority_level: Optional[SeniorityLevel] = None
-    expertises: Optional[List[str]] = None
     experiences: Optional[List[Dict]] = Field(default_factory=list)
 
     # Five flat subject_group arrays from the User-service SQS payload —
@@ -75,5 +73,4 @@ class MentorProfileVO(ProfileVO):
     personal_statement: Optional[str] = ""
     about: Optional[str] = ""
     seniority_level: Optional[SeniorityLevel] = SeniorityLevel.NO_REVEAL
-    expertises: Optional[ProfessionListVO] = None
     experiences: Optional[List[ExperienceVO]] = Field(default_factory=list)

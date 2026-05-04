@@ -6,14 +6,7 @@ class Language(Enum):
     ZH_TW = 'zh_TW'
 
 
-class InterestCategory(Enum):
-    INTERESTED_POSITION = 'INTERESTED_POSITION'
-    SKILL = 'SKILL'
-    TOPIC = 'TOPIC'
-
-
 class ProfessionCategory(Enum):
-    EXPERTISE = 'EXPERTISE'
     INDUSTRY = 'INDUSTRY'
 
 
