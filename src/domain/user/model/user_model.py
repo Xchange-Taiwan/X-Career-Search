@@ -1,9 +1,8 @@
 import logging
-from typing import Optional
+from typing import Any, Dict, Optional
 
 from pydantic import BaseModel
 
-from .common_model import ProfessionVO
 from ....config.conf import DEFAULT_LANGUAGE
 
 log = logging.getLogger(__name__)
@@ -38,7 +37,10 @@ class ProfileVO(BaseModel):
     company: Optional[str] = ""
     years_of_experience: Optional[str] = "0"
     location: Optional[str] = ""
-    industry: Optional[ProfessionVO] = None
+    # Search receives mentor profiles via SQS; the User service emits
+    # `industry` as a flat subject_group string. Typed loosely here
+    # because Search just round-trips it into OpenSearch.
+    industry: Optional[Dict[str, Any]] = None
     onboarding: Optional[bool] = False
     is_mentor: Optional[bool] = False
     language: Optional[str] = DEFAULT_LANGUAGE

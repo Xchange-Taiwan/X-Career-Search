@@ -62,13 +62,6 @@ class MentorProfileDTO(ProfileDTO):
         return dao_dict
 
 
-class ProfessionDTO(BaseModel):
-    professions_id: int
-    category: Optional[str]
-    subject: Optional[str] = ""
-    profession_metadata: Optional[Dict] = {}
-
-
 class MentorProfileVO(ProfileVO):
     personal_statement: Optional[str] = ""
     about: Optional[str] = ""
