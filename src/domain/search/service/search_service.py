@@ -1,6 +1,7 @@
 from datetime import datetime, timezone
 from typing import Callable, Dict
 
+
 from ....infra.api.opensearch import OpenSearch
 from ....domain.mentor.model.mentor_model import MentorProfileDTO
 from ....domain.search.model.search_model import SearchMentorProfileDTO
@@ -19,7 +20,6 @@ class SearchService:
         self._command_registry: Dict[MentorAction, Callable] = {
             MentorAction.UPSERT_MENTOR_PROFILE: self._upsert_mentor,
             MentorAction.PUT_MENTOR_PROFILE:    self._put_mentor,
-            MentorAction.PATCH_MENTOR_PROFILE:  self._patch_mentor_experiences,
             MentorAction.DELETE_MENTOR_PROFILE: self._delete_mentor_by_event,
         }
 
@@ -53,28 +53,12 @@ class SearchService:
         await self.send_mentor(body)
 
     async def _put_mentor(self, event: Dict):
-        """Update mentor-specific fields (personal_statement, about, seniority_level,
-        tag buckets).  Uses the same _update + doc_as_upsert path so OpenSearch
-        merges only the supplied fields."""
+        """Update mentor-specific fields including experiences and tag buckets.
+        Uses _update + doc_as_upsert; mentor_model.to_json forces empty arrays
+        to ride along so doc_as_upsert can clear cleared fields rather than
+        leaving stale values from the previous version of the document."""
         body = MentorProfileDTO(**event)
         await self.send_mentor(body)
-
-    async def _patch_mentor_experiences(self, event: Dict):
-        """Partial update: replace only the `experiences` nested array and bump
-        updated_at.  Does NOT touch any other profile fields."""
-        user_id = event.get("user_id")
-        experiences = event.get("experiences", [])
-        now_iso = datetime.now(timezone.utc).isoformat()
-        patch_body = {
-            "doc": {
-                "experiences": experiences,
-                "updated_at": now_iso,
-            }
-        }
-        response: ClientResponse = await self.opensearch.post(
-            f"/profiles/_update/{user_id}", json=patch_body
-        )
-        return response.res_json
 
     async def _delete_mentor_by_event(self, event: Dict):
         """Hard-delete the mentor profile document from the index."""
