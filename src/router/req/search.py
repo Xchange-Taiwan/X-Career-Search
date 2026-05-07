@@ -11,12 +11,19 @@ def format_search_mentors_query(query: SearchMentorProfileDTO):
     }
 
     if query.filter_skills:
+        # mentor-pool search: the FE sources its skill dropdown from
+        # tagCatalog.have_skill (mentor-pool/container.tsx), so a user
+        # picking "X" expects "mentors who can teach X" — the HAVE side.
+        # Querying want_skill (mentor wants to learn X) returned 0 hits
+        # for every realistic pick.
         query_body["query"]["bool"]["must"].append(
-            {"terms": {"want_skill": query.filter_skills}}
+            {"terms": {"have_skill": query.filter_skills}}
         )
     if query.filter_topics:
+        # Same mismatch as filter_skills above — FE sources from
+        # tagCatalog.have_topic, so HAVE-side is the right field.
         query_body["query"]["bool"]["must"].append(
-            {"terms": {"want_topic": query.filter_topics}}
+            {"terms": {"have_topic": query.filter_topics}}
         )
     if query.filter_positions:
         query_body["query"]["bool"]["must"].append(
