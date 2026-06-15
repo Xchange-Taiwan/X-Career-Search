@@ -1,17 +1,16 @@
-# dev 分支推送時部署至 AWS Lambda（Serverless Framework）
+# main 分支推送時部署至 AWS Lambda（Serverless Framework）
 # 部署後的 Lambda 環境變數對齊 dev-env-deploy.sh（敏感值放 Repository secrets；DEFAULT_LANGUAGE 用 Variables）
 name: X-Career-Search Pipeline
 
 on:
   push:
     branches:
-      - dev
+      - main
 
 jobs:
   deploy:
-    if: github.ref == 'refs/heads/dev'
+    if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
-    environment: dev
 
     steps:
       - name: Checkout repository
@@ -43,9 +42,9 @@ jobs:
           aws-region: ${{ secrets.AWS_REGION }}
 
       - name: Deploy to AWS Lambda
-        run: npx sls deploy --stage dev --region ${{ secrets.AWS_REGION }}
+        run: npx sls deploy --stage prod --region ${{ secrets.AWS_REGION }}
         env:
-          STAGE: dev
+          STAGE: prod
           THE_REGION: ${{ secrets.AWS_REGION }}
           ACCOUNT_ID: ${{ secrets.AWS_ACCOUNT_ID }}
 
@@ -69,7 +68,7 @@ jobs:
             --arg OPENSERACH_PASSWORD "$OPENSERACH_PASSWORD" \
             --arg PAGE_LIMIT "$PAGE_LIMIT" \
             '{
-              FunctionName: "x-career-search-dev-app",
+              FunctionName: "x-career-search-prod-app",
               Environment: {
                 Variables: {
                   DEFAULT_LANGUAGE: $DEFAULT_LANGUAGE,
