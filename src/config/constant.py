@@ -50,6 +50,5 @@ class Sorting(Enum):
 
 class MentorAction(str, Enum):
     UPSERT_MENTOR_PROFILE = "UPSERT_MENTOR_PROFILE"  # PUT /users/profile
-    PUT_MENTOR_PROFILE    = "PUT_MENTOR_PROFILE"      # PUT /mentors/mentor_profile
-    PATCH_MENTOR_PROFILE  = "PATCH_MENTOR_PROFILE"    # PUT|DELETE /mentors/{id}/experiences
+    PUT_MENTOR_PROFILE    = "PUT_MENTOR_PROFILE"      # PUT /mentors/mentor_profile (carries experiences inline)
     DELETE_MENTOR_PROFILE = "DELETE_MENTOR_PROFILE"   # future: delete mentor account

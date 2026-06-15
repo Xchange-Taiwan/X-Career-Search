@@ -52,7 +52,6 @@ PROFILES_INDEX_MAPPING: Dict = {
             "experiences": {
                 "type": "nested",
                 "properties": {
-                    "id": {"type": "integer"},
                     "category": {"type": "keyword"},
                     "order": {"type": "integer"},
                     "mentor_experiences_metadata": {"type": "object", "dynamic": True},

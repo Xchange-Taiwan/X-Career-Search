@@ -105,5 +105,20 @@ def _handle_sqs_event(event):
                 )
                 failures.append({"itemIdentifier": record["messageId"]})
 
-    asyncio.run(_process_all())
+    # Don't use asyncio.run() — on exit it calls events.set_event_loop(None)
+    # and closes the loop. Once set_event_loop has been called even once on a
+    # thread, Python 3.9's asyncio.get_event_loop() refuses to auto-create a
+    # new loop and raises "RuntimeError: There is no current event loop in
+    # thread 'MainThread'". Mangum.LifespanCycle.__init__ calls exactly that
+    # function, so the *next* HTTP invocation in the same warm Lambda container
+    # would 502 — and every subsequent HTTP invocation in that container too.
+    try:
+        loop = asyncio.get_event_loop()
+        if loop.is_closed():
+            raise RuntimeError("loop closed")
+    except RuntimeError:
+        loop = asyncio.new_event_loop()
+        asyncio.set_event_loop(loop)
+
+    loop.run_until_complete(_process_all())
     return {"batchItemFailures": failures}

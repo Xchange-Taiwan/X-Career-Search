@@ -42,6 +42,16 @@ class MentorProfileDTO(ProfileDTO):
     # Fields that exist only for SQS routing and must never be persisted to OpenSearch.
     _EXCLUDE_FROM_DOC = {"action"}
 
+    # Fields that must be sent even when empty so doc_as_upsert can clear them.
+    # Skipping empty arrays leaves stale values in OpenSearch — e.g. a mentor
+    # who clears all experiences would still match nested experience filters
+    # against the previous list.
+    _ALWAYS_INCLUDE_IF_EMPTY = {
+        "experiences",
+        "want_position", "want_skill", "want_topic",
+        "have_skill", "have_topic",
+    }
+
     def to_json(self) -> Dict:
         dao_dict = {}
         for key in self.model_fields.keys():
@@ -51,7 +61,7 @@ class MentorProfileDTO(ProfileDTO):
             if value is None:
                 continue
             elif isinstance(value, (list, dict)):
-                if len(value) == 0:
+                if len(value) == 0 and key not in self._ALWAYS_INCLUDE_IF_EMPTY:
                     continue
             elif isinstance(value, Enum):
                 dao_dict[key] = value.value
