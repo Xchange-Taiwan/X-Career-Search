@@ -34,7 +34,7 @@ provider:
         - sqs:GetQueueAttributes
         - sqs:ChangeMessageVisibility
         Resource:
-        - arn:aws:sqs:${env:THE_REGION}:${env:ACCOUNT_ID}:X_CAREER_USER_DUPLICATE_QUEUE.fifo
+        - ${env:SQS_QUEUE_ARN}
 
 custom:
   pythonRequirements:
@@ -79,7 +79,7 @@ functions:
           headers: '*'
           allowCredentials: false
     - sqs:
-        arn: arn:aws:sqs:${env:THE_REGION}:${env:ACCOUNT_ID}:X_CAREER_USER_DUPLICATE_QUEUE.fifo
+        arn: ${env:SQS_QUEUE_ARN}
         batchSize: 10
         functionResponseType: ReportBatchItemFailures
 plugins:
