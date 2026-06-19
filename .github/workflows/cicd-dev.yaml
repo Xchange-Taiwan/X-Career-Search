@@ -48,6 +48,11 @@ jobs:
           STAGE: dev
           THE_REGION: ${{ secrets.AWS_REGION }}
           ACCOUNT_ID: ${{ secrets.AWS_ACCOUNT_ID }}
+          SQS_QUEUE_ARN: ${{ secrets.SQS_QUEUE_ARN }}
+          SQS_QUEUE_URL: ${{ secrets.SQS_QUEUE_URL }}
+
+      - name: Wait for Lambda update to settle
+        run: aws lambda wait function-updated --function-name x-career-search-dev-app
 
       - name: Update Lambda environment variables
         env:
@@ -83,3 +88,16 @@ jobs:
               }
             }' > /tmp/search-lambda-update.json
           aws lambda update-function-configuration --cli-input-json file:///tmp/search-lambda-update.json
+
+      - name: Verify SQS event source
+        env:
+          SQS_QUEUE_ARN: ${{ secrets.SQS_QUEUE_ARN }}
+        run: |
+          aws lambda wait function-updated --function-name x-career-search-dev-app
+          ENABLED_MAPPINGS="$(aws lambda list-event-source-mappings \
+            --function-name x-career-search-dev-app \
+            --event-source-arn "$SQS_QUEUE_ARN" \
+            --query 'length(EventSourceMappings[?State==`Enabled`])' \
+            --output text)"
+          test "$ENABLED_MAPPINGS" = "1"
+          echo "Verified dev Search Lambda SQS event source."
