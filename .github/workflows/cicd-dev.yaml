@@ -50,6 +50,9 @@ jobs:
           ACCOUNT_ID: ${{ secrets.AWS_ACCOUNT_ID }}
           SQS_QUEUE_ARN: ${{ secrets.SQS_QUEUE_ARN }}
           SQS_QUEUE_URL: ${{ secrets.SQS_QUEUE_URL }}
+          SEARCH_LAMBDA_SECURITY_GROUP_ID: ${{ secrets.SEARCH_LAMBDA_SECURITY_GROUP_ID }}
+          SEARCH_LAMBDA_SUBNET_A_ID: ${{ secrets.SEARCH_LAMBDA_SUBNET_A_ID }}
+          SEARCH_LAMBDA_SUBNET_C_ID: ${{ secrets.SEARCH_LAMBDA_SUBNET_C_ID }}
 
       - name: Wait for Lambda update to settle
         run: aws lambda wait function-updated --function-name x-career-search-dev-app
@@ -65,6 +68,9 @@ jobs:
           DEFAULT_LANGUAGE="${DEFAULT_LANGUAGE:-zh_TW}"
           TESTING="${TESTING:-dev}"
           PAGE_LIMIT="${PAGE_LIMIT:-9}"
+          test -n "$OPENSERACH_DOMAIN_ENDPOINT"
+          test -n "$OPENSERACH_USERNAME"
+          test -n "$OPENSERACH_PASSWORD"
           jq -n \
             --arg DEFAULT_LANGUAGE "$DEFAULT_LANGUAGE" \
             --arg STAGE "dev" \
