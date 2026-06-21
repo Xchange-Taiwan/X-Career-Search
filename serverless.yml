@@ -12,9 +12,26 @@ provider:
   region: ${env:THE_REGION} # ${opt:region, "ap-northeast-1"}
   stage: ${env:STAGE, "dev"} # ${opt:stage, "dev"}
   timeout: 30
+  # Search runs in isolated subnets and reaches Elasticsearch over the VPC
+  # private network. Infrastructure IDs are injected by GitHub Actions secrets.
+  vpc:
+    securityGroupIds:
+    - ${env:SEARCH_LAMBDA_SECURITY_GROUP_ID}
+    subnetIds:
+    - ${env:SEARCH_LAMBDA_SUBNET_A_ID}
+    - ${env:SEARCH_LAMBDA_SUBNET_C_ID}
   iam:
     role:
       statements:
+      - Effect: Allow
+        Action:
+        - ec2:CreateNetworkInterface
+        - ec2:DescribeNetworkInterfaces
+        - ec2:DescribeSubnets
+        - ec2:DeleteNetworkInterface
+        - ec2:AssignPrivateIpAddresses
+        - ec2:UnassignPrivateIpAddresses
+        Resource: "*"
       - Effect: Allow
         Action:
         - logs:CreateLogGroup
