@@ -52,6 +52,7 @@ jobs:
           SEARCH_LAMBDA_SECURITY_GROUP_ID: ${{ secrets.SEARCH_LAMBDA_SECURITY_GROUP_ID }}
           SEARCH_LAMBDA_SUBNET_A_ID: ${{ secrets.SEARCH_LAMBDA_SUBNET_A_ID }}
           SEARCH_LAMBDA_SUBNET_C_ID: ${{ secrets.SEARCH_LAMBDA_SUBNET_C_ID }}
+          PROFILE_INDEX_NAME: ${{ secrets.PROFILE_INDEX_NAME }}
 
       - name: Wait for Lambda update to settle
         run: aws lambda wait function-updated --function-name x-career-search-prod-app
@@ -62,6 +63,7 @@ jobs:
           OPENSERACH_DOMAIN_ENDPOINT: ${{ secrets.OPENSERACH_DOMAIN_ENDPOINT }}
           OPENSERACH_USERNAME: ${{ secrets.OPENSERACH_USERNAME }}
           OPENSERACH_PASSWORD: ${{ secrets.OPENSERACH_PASSWORD }}
+          PROFILE_INDEX_NAME: ${{ secrets.PROFILE_INDEX_NAME }}
           PAGE_LIMIT: ${{ vars.PAGE_LIMIT }}
         run: |
           DEFAULT_LANGUAGE="${DEFAULT_LANGUAGE:-zh_TW}"
@@ -70,6 +72,7 @@ jobs:
           test -n "$OPENSERACH_DOMAIN_ENDPOINT"
           test -n "$OPENSERACH_USERNAME"
           test -n "$OPENSERACH_PASSWORD"
+          test "$PROFILE_INDEX_NAME" = "profiles"
           jq -n \
             --arg DEFAULT_LANGUAGE "$DEFAULT_LANGUAGE" \
             --arg STAGE "prod" \
@@ -77,6 +80,7 @@ jobs:
             --arg OPENSERACH_DOMAIN_ENDPOINT "$OPENSERACH_DOMAIN_ENDPOINT" \
             --arg OPENSERACH_USERNAME "$OPENSERACH_USERNAME" \
             --arg OPENSERACH_PASSWORD "$OPENSERACH_PASSWORD" \
+            --arg PROFILE_INDEX_NAME "$PROFILE_INDEX_NAME" \
             --arg PAGE_LIMIT "$PAGE_LIMIT" \
             '{
               FunctionName: "x-career-search-prod-app",
@@ -88,6 +92,7 @@ jobs:
                   OPENSERACH_DOMAIN_ENDPOINT: $OPENSERACH_DOMAIN_ENDPOINT,
                   OPENSERACH_USERNAME: $OPENSERACH_USERNAME,
                   OPENSERACH_PASSWORD: $OPENSERACH_PASSWORD,
+                  PROFILE_INDEX_NAME: $PROFILE_INDEX_NAME,
                   PAGE_LIMIT: $PAGE_LIMIT
                 }
               }
@@ -99,6 +104,11 @@ jobs:
           SQS_QUEUE_ARN: ${{ secrets.SQS_QUEUE_ARN }}
         run: |
           aws lambda wait function-updated --function-name x-career-search-prod-app
+          DEPLOYED_INDEX="$(aws lambda get-function-configuration \
+            --function-name x-career-search-prod-app \
+            --query 'Environment.Variables.PROFILE_INDEX_NAME' \
+            --output text)"
+          test "$DEPLOYED_INDEX" = "profiles"
           ENABLED_MAPPINGS="$(aws lambda list-event-source-mappings \
             --function-name x-career-search-prod-app \
             --event-source-arn "$SQS_QUEUE_ARN" \

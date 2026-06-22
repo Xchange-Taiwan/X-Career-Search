@@ -85,6 +85,7 @@ functions:
     timeout: 60
     environment:
       STAGE: ${self:provider.stage}
+      PROFILE_INDEX_NAME: ${env:PROFILE_INDEX_NAME}
     layers:
     - { Ref: PythonRequirementsLambdaLayer }
     events:

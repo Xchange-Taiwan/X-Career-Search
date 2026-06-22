@@ -8,6 +8,10 @@ DEFAULT_LANGUAGE = os.getenv('DEFAULT_LANGUAGE', 'zh_TW')
 OPENSERACH_DOMAIN_ENDPOINT = os.getenv('OPENSERACH_DOMAIN_ENDPOINT', '')
 OPENSERACH_USERNAME = os.getenv('OPENSERACH_USERNAME', '')
 OPENSERACH_PASSWORD = os.getenv('OPENSERACH_PASSWORD', '')
+PROFILE_INDEX_NAME = os.getenv('PROFILE_INDEX_NAME', 'profiles').strip()
+
+if not PROFILE_INDEX_NAME:
+    raise ValueError('PROFILE_INDEX_NAME must not be empty')
 
 PAGE_LIMIT = int(os.getenv("PAGE_LIMIT", 10))
 

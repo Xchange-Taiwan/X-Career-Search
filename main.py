@@ -26,6 +26,7 @@ from src.app._di.injection import (
     PROFILES_INDEX_MAPPING,
 )
 from src.config import exception
+from src.config.conf import PROFILE_INDEX_NAME
 
 STAGE = os.environ.get("STAGE")
 root_path = "/" if not STAGE else f"/{STAGE}"
@@ -43,7 +44,7 @@ app.add_middleware(
 @app.on_event("startup")
 async def startup_event():
     # ensure OpenSearch index exists with the correct mapping
-    await _index_initializer.ensure_index("profiles", PROFILES_INDEX_MAPPING)
+    await _index_initializer.ensure_index(PROFILE_INDEX_NAME, PROFILES_INDEX_MAPPING)
 
     # init global connection pool
     await _resource_manager.initial()
