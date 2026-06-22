@@ -7,7 +7,7 @@ from ....domain.mentor.model.mentor_model import MentorProfileDTO
 from ....domain.search.model.search_model import SearchMentorProfileDTO
 from ....config.constant import MentorAction
 from ....config.exception import ClientException
-from ....config.conf import PROFILE_STR_DEFAULT_FIELDS
+from ....config.conf import PROFILE_INDEX_NAME, PROFILE_STR_DEFAULT_FIELDS
 from ....infra.template.client_response import ClientResponse
 import logging
 
@@ -68,20 +68,20 @@ class SearchService:
     # ── Core OpenSearch operations ────────────────────────────────────────────
 
     async def send_mentor(self, body: MentorProfileDTO):
-        """Upsert a full mentor profile document into the `profiles` index."""
+        """Upsert a full mentor profile document into the configured index."""
         user_id = body.user_id
         body.updated_at = datetime.now(timezone.utc)
         doc = body.to_json()
 
         response: ClientResponse = await self.opensearch.post(
-            f"/profiles/_update/{user_id}",
+            f"/{PROFILE_INDEX_NAME}/_update/{user_id}",
             json={"doc": doc, "doc_as_upsert": True},
         )
         return response.res_json
 
     async def delete_mentor(self, user_id: int):
         response: ClientResponse = await self.opensearch.delete(
-            f"/profiles/_doc/{user_id}"
+            f"/{PROFILE_INDEX_NAME}/_doc/{user_id}"
         )
         return response.res_json
 
@@ -89,7 +89,7 @@ class SearchService:
         if query is None:
             raise ClientException(msg="Query could not be None")
         response: ClientResponse = await self.opensearch.post(
-            "/profiles/_search",
+            f"/{PROFILE_INDEX_NAME}/_search",
             params={"request_cache": "true", "pretty": "true"},
             json=query,
         )
@@ -104,7 +104,7 @@ class SearchService:
 
     async def get_mentor(self, user_id: int):
         response: ClientResponse = await self.opensearch.get(
-            f"/profiles/_doc/{user_id}", params={"pretty": "true"}
+            f"/{PROFILE_INDEX_NAME}/_doc/{user_id}", params={"pretty": "true"}
         )
         data = response.res_json
         source = data.get("_source", {})
