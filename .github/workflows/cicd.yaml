@@ -72,7 +72,7 @@ jobs:
           test -n "$OPENSERACH_DOMAIN_ENDPOINT"
           test -n "$OPENSERACH_USERNAME"
           test -n "$OPENSERACH_PASSWORD"
-          test "$PROFILE_INDEX_NAME" = "profiles"
+          test -n "$PROFILE_INDEX_NAME"
           jq -n \
             --arg DEFAULT_LANGUAGE "$DEFAULT_LANGUAGE" \
             --arg STAGE "prod" \
@@ -97,18 +97,21 @@ jobs:
                 }
               }
             }' > /tmp/search-lambda-update.json
-          aws lambda update-function-configuration --cli-input-json file:///tmp/search-lambda-update.json
+          aws lambda update-function-configuration \
+            --cli-input-json file:///tmp/search-lambda-update.json \
+            > /dev/null
 
       - name: Verify SQS event source
         env:
           SQS_QUEUE_ARN: ${{ secrets.SQS_QUEUE_ARN }}
+          PROFILE_INDEX_NAME: ${{ secrets.PROFILE_INDEX_NAME }}
         run: |
           aws lambda wait function-updated --function-name x-career-search-prod-app
           DEPLOYED_INDEX="$(aws lambda get-function-configuration \
             --function-name x-career-search-prod-app \
             --query 'Environment.Variables.PROFILE_INDEX_NAME' \
             --output text)"
-          test "$DEPLOYED_INDEX" = "profiles"
+          test "$DEPLOYED_INDEX" = "$PROFILE_INDEX_NAME"
           ENABLED_MAPPINGS="$(aws lambda list-event-source-mappings \
             --function-name x-career-search-prod-app \
             --event-source-arn "$SQS_QUEUE_ARN" \
